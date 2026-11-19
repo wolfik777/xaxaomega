@@ -1,0 +1,3671 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>xaxaomega — Светлый дом на Twitch</title>
+    <meta
+      name="description"
+      content="xaxaomega — стримы, рисунки и разговоры на Twitch."
+    />
+    <meta property="og:title" content="xaxaomega — Светлый дом на Twitch" />
+    <meta
+      property="og:description"
+      content="Стримы, рисунки и разговоры на Twitch."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#FCF9F3" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23FFF8E7'/%3E%3Cstop offset='58%25' stop-color='%23F5B971'/%3E%3Cstop offset='100%25' stop-color='%23D9822B'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='26' fill='url(%23g)'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Onest:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* =====================================================================
+         1. TOKENS & CONTINUOUS SCROLL-DRIVEN PALETTE
+         ===================================================================== */
+      :root {
+        --font-display: 'Lora', Georgia, 'Times New Roman', serif;
+        --font-sans: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+        --gold: #D9822B;
+        --gold-soft: #F5B971;
+        --gold-glow: rgba(217, 130, 43, 0.24);
+        --mint-live: #2DB5A3;
+        --mint-glow: rgba(45, 181, 163, 0.34);
+
+        /* Continuously interpolated from smooth scrollProgress (lerp 0.055) */
+        --ink: rgb(30, 25, 22);
+        --ink-muted: rgba(30, 25, 22, 0.72);
+        --ink-dim: rgba(30, 25, 22, 0.52);
+        --surface: rgba(255, 253, 249, 0.74);
+        --surface-hover: rgba(255, 253, 249, 0.88);
+        --surface-border: rgba(184, 139, 88, 0.20);
+        --hairline: rgba(30, 25, 22, 0.11);
+        --header-bg: rgba(252, 249, 243, 0.78);
+        --header-border: rgba(184, 139, 88, 0.14);
+        --shadow-glow: 0 24px 64px -28px rgba(170, 118, 60, 0.18);
+        --btn-primary-bg: rgb(30, 25, 22);
+        --btn-primary-ink: rgb(252, 249, 243);
+        --btn-secondary-bg: rgba(255, 253, 249, 0.56);
+        --heading-shadow: none;
+        --sun-sheen-x: 78%;
+        --sun-sheen-y: 18%;
+        --scroll-p: 0;
+
+        --container-max: 1120px;
+        --header-h: 66px;
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* =====================================================================
+         2. BASE & OVERFLOW PROTECTION
+         ===================================================================== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow-x: clip;
+        max-width: 100%;
+        scroll-behavior: auto;
+        background-color: #FCF9F3;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow-x: clip;
+        max-width: 100%;
+        min-height: 100vh;
+        font-family: var(--font-sans);
+        font-size: 16px;
+        line-height: 1.62;
+        color: var(--ink);
+        background-color: transparent;
+        word-break: normal;
+        overflow-wrap: break-word;
+      }
+
+      img,
+      svg,
+      iframe {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      section,
+      article,
+      header,
+      footer,
+      nav,
+      main,
+      div {
+        min-width: 0;
+      }
+
+      /* =====================================================================
+         3. LIVING CANVAS SCENE + SUBTLE 35MM ATMOSPHERIC GRAIN
+         ===================================================================== */
+      #sky-scene {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+        display: block;
+      }
+
+      /* Whisper-fine analog grain removes sterile digital gradient banding (GPU-cached bitmap tile) */
+      .film-grain {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.035;
+        background-repeat: repeat;
+        background-size: 128px 128px;
+      }
+
+      .dawn-veil {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 78% 18%,
+          rgba(255, 250, 238, 0.96) 0%,
+          rgba(252, 249, 243, 0.98) 55%,
+          rgba(248, 241, 229, 1) 100%
+        );
+        opacity: 1;
+        transition: opacity 1.1s var(--ease-out-expo);
+      }
+
+      body.is-ready .dawn-veil {
+        opacity: 0;
+      }
+
+      /* =====================================================================
+         4. FIXED 3-ZONE EDITORIAL HEADER
+         ===================================================================== */
+      .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 30;
+        height: var(--header-h);
+        background: var(--header-bg);
+        border-bottom: 1px solid var(--header-border);
+        -webkit-backdrop-filter: blur(18px) saturate(125%);
+        backdrop-filter: blur(18px) saturate(125%);
+      }
+
+      .header-inner {
+        max-width: var(--container-max);
+        height: 100%;
+        margin: 0 auto;
+        padding-inline: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+      }
+
+      .brand-mark {
+        font-family: var(--font-display);
+        font-size: 1.52rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        line-height: 1;
+        color: var(--ink);
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: opacity 0.25s ease;
+      }
+
+      .brand-mark:hover {
+        opacity: 0.72;
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+      }
+
+      .nav-link {
+        position: relative;
+        font-size: 0.86rem;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        color: var(--ink-muted);
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding-block: 6px;
+        transition: color 0.25s ease;
+      }
+
+      .nav-link::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 1px;
+        height: 1px;
+        background: var(--gold);
+        transform: scaleX(0);
+        transform-origin: right center;
+        transition: transform 0.38s var(--ease-out-expo);
+      }
+
+      .nav-link:hover,
+      .nav-link.is-active {
+        color: var(--ink);
+      }
+
+      .nav-link:hover::after,
+      .nav-link.is-active::after {
+        transform: scaleX(1);
+        transform-origin: left center;
+      }
+
+      .header-action {
+        flex-shrink: 0;
+      }
+
+      .header-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        flex-shrink: 0;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        transition:
+          border-color 0.28s ease,
+          background-color 0.28s ease,
+          box-shadow 0.28s ease;
+      }
+
+      .header-cta:hover {
+        border-color: rgba(217, 130, 43, 0.52);
+        background: var(--surface-hover);
+        box-shadow: 0 8px 24px -12px var(--gold-glow);
+      }
+
+      /* =====================================================================
+         5. RIGHT-EDGE VERTICAL SUN PROGRESS SCALE (DESKTOP)
+         ===================================================================== */
+      .sun-rail {
+        position: fixed;
+        right: 26px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 25;
+        user-select: none;
+      }
+
+      .sun-rail-track-wrap {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 212px;
+        padding-right: 18px;
+      }
+
+      .sun-rail-line {
+        position: absolute;
+        right: 5px;
+        top: 6px;
+        bottom: 6px;
+        width: 1.5px;
+        background: var(--hairline);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .sun-rail-fill {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+        transform-origin: top center;
+        transform: scaleY(0);
+      }
+
+      .sun-rail-orb {
+        position: absolute;
+        right: 1px;
+        top: 6px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #FFF8E7 0%, #F5B971 58%, #D9822B 100%);
+        box-shadow: 0 0 12px rgba(245, 185, 113, 0.8);
+        pointer-events: none;
+        will-change: transform;
+      }
+
+      .sun-stop {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        color: var(--ink-dim);
+        padding: 4px 0;
+        white-space: nowrap;
+      }
+
+      .sun-stop-label {
+        opacity: 0.68;
+        transform: translateX(3px);
+        transition: opacity 0.28s var(--ease-out-expo), transform 0.28s var(--ease-out-expo), color 0.25s ease;
+      }
+
+      .sun-stop:hover .sun-stop-label,
+      .sun-stop.is-current .sun-stop-label {
+        opacity: 1;
+        transform: translateX(0);
+        color: var(--ink);
+      }
+
+      .sun-stop-tick {
+        position: absolute;
+        right: -14.5px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--hairline);
+        transition: background-color 0.25s ease, transform 0.25s ease;
+      }
+
+      .sun-stop.is-current .sun-stop-tick {
+        background: var(--gold-soft);
+        transform: scale(1.3);
+      }
+
+      /* =====================================================================
+         6. LAYOUT & EDITORIAL TYPOGRAPHY
+         ===================================================================== */
+      .page-content {
+        position: relative;
+        z-index: 10;
+      }
+
+      .container {
+        width: 100%;
+        max-width: var(--container-max);
+        margin: 0 auto;
+        padding-inline: 32px;
+      }
+
+      .screen {
+        position: relative;
+        padding-block: clamp(92px, 12vh, 152px);
+      }
+
+      .section-title {
+        font-family: var(--font-display);
+        font-size: clamp(2.15rem, 4.1vw, 3.5rem);
+        font-weight: 500;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+        margin: 0;
+        text-wrap: balance;
+        text-shadow: var(--heading-shadow);
+      }
+
+      .section-lead {
+        font-size: clamp(0.98rem, 1.25vw, 1.08rem);
+        line-height: 1.66;
+        color: var(--ink-muted);
+        margin: 18px 0 0;
+        max-width: 50ch;
+      }
+
+      /* =====================================================================
+         7. REFINED TACTILE BUTTONS (NO CLICHÉ ARROWS)
+         ===================================================================== */
+      .btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 13px 30px;
+        border-radius: 999px;
+        font-size: 0.92rem;
+        font-weight: 500;
+        letter-spacing: 0.015em;
+        white-space: nowrap;
+        flex-shrink: 0;
+        overflow: hidden;
+        transition:
+          transform 0.36s var(--ease-out-expo),
+          box-shadow 0.36s var(--ease-out-expo),
+          border-color 0.28s ease,
+          background-color 0.28s ease;
+        will-change: transform;
+      }
+
+      .btn-primary {
+        background: var(--btn-primary-bg);
+        color: var(--btn-primary-ink);
+        border: 1px solid transparent;
+        box-shadow: 0 14px 32px -16px rgba(30, 25, 22, 0.32);
+      }
+
+      .btn-primary::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(245, 185, 113, 0.24), rgba(217, 130, 43, 0.12) 55%, transparent);
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+
+      .btn-primary:hover::before {
+        opacity: 1;
+      }
+
+      .btn-primary:hover {
+        box-shadow: 0 18px 40px -14px rgba(217, 130, 43, 0.42);
+      }
+
+      .btn-secondary {
+        background: var(--btn-secondary-bg);
+        color: var(--ink);
+        border: 1px solid var(--surface-border);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+
+      .btn-secondary:hover {
+        border-color: rgba(217, 130, 43, 0.52);
+        background: var(--surface-hover);
+        box-shadow: 0 14px 32px -18px var(--gold-glow);
+      }
+
+      .btn-gold {
+        background: linear-gradient(135deg, #E59643 0%, #D47E28 100%);
+        color: #FFFBF4;
+        border: 1px solid rgba(255, 232, 196, 0.3);
+        box-shadow: 0 18px 42px -14px rgba(217, 130, 43, 0.52);
+      }
+
+      .btn-gold:hover {
+        box-shadow: 0 22px 48px -12px rgba(245, 185, 113, 0.62);
+      }
+
+      .btn-roll {
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 1.35em;
+        line-height: 1.35em;
+      }
+
+      .btn-roll-line {
+        display: block;
+        transition: transform 0.42s var(--ease-out-expo);
+      }
+
+      .btn:hover .btn-roll-line,
+      .header-cta:hover .btn-roll-line {
+        transform: translateY(-100%);
+      }
+
+      /* =====================================================================
+         8. SCREEN 1 — HERO (CENTERED PURE MORNING)
+         ===================================================================== */
+      .hero-screen {
+        min-height: 100svh;
+        display: flex;
+        align-items: center;
+        padding-top: calc(var(--header-h) + 32px);
+        padding-bottom: clamp(64px, 9vh, 108px);
+      }
+
+      .hero-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 820px;
+        margin: 0 auto;
+      }
+
+      .avatar-showcase {
+        position: relative;
+        width: 132px;
+        height: 132px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .avatar-halo {
+        position: absolute;
+        inset: -16px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(245, 185, 113, 0.38) 0%,
+          rgba(245, 185, 113, 0.12) 50%,
+          transparent 72%
+        );
+        animation: halo-breathe 6s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      @keyframes halo-breathe {
+        0%, 100% {
+          transform: scale(0.96);
+          opacity: 0.76;
+        }
+        50% {
+          transform: scale(1.06);
+          opacity: 1;
+        }
+      }
+
+      .avatar-frame {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        padding: 4px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, rgba(255, 253, 249, 0.92), rgba(245, 185, 113, 0.32));
+        border: 1px solid rgba(217, 130, 43, 0.24);
+        box-shadow: 0 20px 48px -20px rgba(182, 121, 52, 0.32);
+      }
+
+      .avatar-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        overflow: hidden;
+        background: linear-gradient(135deg, #F8E5C8, #EFA96E);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        transition: opacity 0.5s ease;
+      }
+
+      .avatar-fallback-monogram {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-size: 2.1rem;
+        font-weight: 600;
+        color: #5C3A1E;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .avatar-inner.is-fallback .avatar-img {
+        opacity: 0;
+      }
+
+      .avatar-inner.is-fallback .avatar-fallback-monogram {
+        opacity: 1;
+      }
+
+      /* Live status badge */
+      .live-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 6px 16px;
+        border-radius: 999px;
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        font-size: 0.83rem;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 22px;
+        max-width: 100%;
+      }
+
+      .status-dot {
+        position: relative;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: rgba(154, 134, 118, 0.65);
+      }
+
+      .live-status-pill.is-live .status-dot {
+        background: var(--mint-live);
+        box-shadow: 0 0 0 3px rgba(45, 181, 163, 0.18);
+      }
+
+      .live-status-pill.is-live .status-dot::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 1.5px solid var(--mint-live);
+        animation: live-ring 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+      }
+
+      @keyframes live-ring {
+        0% {
+          transform: scale(0.7);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(2.1);
+          opacity: 0;
+        }
+      }
+
+      .status-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .status-sep {
+        opacity: 0.4;
+      }
+
+      .status-meta {
+        color: var(--ink-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 340px;
+      }
+
+      .hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(2.75rem, 7.6vw, 6.1rem);
+        font-weight: 600;
+        line-height: 1.02;
+        letter-spacing: 0.055em;
+        color: var(--ink);
+        margin: 0 0 20px;
+        text-shadow: var(--heading-shadow);
+      }
+
+      .mask-line {
+        display: block;
+        overflow: hidden;
+        padding-bottom: 0.08em;
+        margin-bottom: -0.08em;
+      }
+
+      .mask-line-inner {
+        display: block;
+        transform: translateY(112%);
+        opacity: 0;
+        transition:
+          transform 0.95s var(--ease-out-expo),
+          opacity 0.7s ease;
+      }
+
+      body.is-ready .mask-line-inner {
+        transform: translateY(0%);
+        opacity: 1;
+      }
+
+      .hero-stagger {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.85s var(--ease-out-expo),
+          transform 0.85s var(--ease-out-expo);
+      }
+
+      body.is-ready .hero-stagger {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .hero-stagger[data-delay='1'] { transition-delay: 0.14s; }
+      .hero-stagger[data-delay='2'] { transition-delay: 0.26s; }
+      .hero-stagger[data-delay='3'] { transition-delay: 0.38s; }
+      .hero-stagger[data-delay='4'] { transition-delay: 0.50s; }
+
+      .hero-bio {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: clamp(1.18rem, 2vw, 1.54rem);
+        font-weight: 400;
+        line-height: 1.44;
+        color: var(--ink);
+        margin: 0 0 10px;
+        max-width: 36ch;
+        text-wrap: balance;
+      }
+
+      .hero-subtitle {
+        font-size: clamp(0.94rem, 1.15vw, 1.02rem);
+        line-height: 1.65;
+        color: var(--ink-muted);
+        margin: 0 0 36px;
+        max-width: 46ch;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      /* =====================================================================
+         9. SCREEN 2 — STREAM STAGE
+         ===================================================================== */
+      .stream-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 18px;
+        max-width: 1060px;
+        margin: 0 auto 28px;
+      }
+
+      .stream-meta-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: var(--ink-muted);
+        margin-top: 10px;
+      }
+
+      .stream-live-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .stream-live-indicator .mini-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(154, 134, 118, 0.65);
+      }
+
+      .stream-live-indicator.is-live .mini-dot {
+        background: var(--mint-live);
+        box-shadow: 0 0 8px var(--mint-glow);
+      }
+
+      .player-shell {
+        position: relative;
+        width: 100%;
+        max-width: 1060px;
+        margin: 0 auto;
+        padding: 10px;
+        border-radius: 26px;
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        box-shadow:
+          var(--shadow-glow),
+          inset 0 1px 0 rgba(255, 252, 245, 0.65);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        transition: border-color 0.35s ease, box-shadow 0.35s ease;
+      }
+
+      .player-shell::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(
+          circle at var(--sun-sheen-x) var(--sun-sheen-y),
+          rgba(255, 232, 186, 0.38) 0%,
+          rgba(245, 185, 113, 0.12) 32%,
+          transparent 62%
+        );
+        pointer-events: none;
+      }
+
+      .player-stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 17px;
+        overflow: hidden;
+        background: #1A1424;
+      }
+
+      .player-backdrop-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transform: scale(1.01);
+        transition: transform 0.9s var(--ease-out-expo), opacity 0.5s ease;
+      }
+
+      .player-stage:hover .player-backdrop-img {
+        transform: scale(1.04);
+      }
+
+      .player-stage.is-playing .player-backdrop-img {
+        opacity: 0;
+      }
+
+      .player-preview {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px 28px;
+        background:
+          radial-gradient(circle at 50% 46%, rgba(16, 12, 22, 0.08) 0%, rgba(16, 12, 22, 0.34) 72%),
+          linear-gradient(180deg, rgba(16, 12, 22, 0.16) 0%, rgba(16, 12, 22, 0.06) 44%, rgba(16, 12, 22, 0.74) 100%);
+        color: #FAF6F0;
+        transition: opacity 0.45s ease;
+      }
+
+      .player-stage.is-playing .player-preview {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .player-live-chip {
+        position: absolute;
+        top: 18px;
+        left: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 13px;
+        border-radius: 999px;
+        background: rgba(18, 13, 24, 0.64);
+        border: 1px solid rgba(255, 250, 242, 0.2);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #FAF6F0;
+      }
+
+      .player-live-chip .chip-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(250, 246, 240, 0.55);
+      }
+
+      .player-live-chip.is-live .chip-dot {
+        background: var(--mint-live);
+        box-shadow: 0 0 8px var(--mint-glow);
+      }
+
+      .play-trigger {
+        position: relative;
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 250, 242, 0.94);
+        color: #1E1916;
+        box-shadow: 0 20px 44px -12px rgba(14, 10, 18, 0.56);
+        transition: transform 0.35s var(--ease-out-expo), background-color 0.25s ease;
+      }
+
+      .play-trigger::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(245, 185, 113, 0.72);
+        animation: play-breathe 3.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        pointer-events: none;
+      }
+
+      @keyframes play-breathe {
+        0% {
+          transform: scale(1);
+          opacity: 0.7;
+        }
+        70%, 100% {
+          transform: scale(1.36);
+          opacity: 0;
+        }
+      }
+
+      .play-trigger:hover {
+        transform: scale(1.07);
+        background: #FFFFFF;
+      }
+
+      .play-trigger svg {
+        width: 24px;
+        height: 24px;
+        margin-left: 3px;
+      }
+
+      .player-caption-bar {
+        position: absolute;
+        left: 24px;
+        right: 24px;
+        bottom: 20px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        text-align: left;
+      }
+
+      .player-preview-title {
+        font-family: var(--font-display);
+        font-size: clamp(1.25rem, 2.2vw, 1.85rem);
+        font-weight: 500;
+        line-height: 1.2;
+        margin: 0 0 4px;
+        color: #FAF6F0;
+        max-width: 32ch;
+        text-shadow: 0 2px 14px rgba(12, 8, 18, 0.65);
+      }
+
+      .player-preview-sub {
+        font-size: 0.86rem;
+        color: rgba(250, 246, 240, 0.84);
+        margin: 0;
+        text-shadow: 0 1px 10px rgba(12, 8, 18, 0.65);
+      }
+
+      .player-iframe-mount {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .player-iframe-mount iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .player-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 18px;
+        max-width: 1060px;
+        margin: 14px auto 0;
+        padding-inline: 6px;
+        min-height: 28px;
+      }
+
+      .text-action {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--ink-muted);
+        white-space: nowrap;
+        padding-block: 4px;
+        transition: color 0.25s ease;
+      }
+
+      .text-action::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: var(--gold-soft);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.35s var(--ease-out-expo);
+      }
+
+      .text-action:hover {
+        color: var(--ink);
+      }
+
+      .text-action:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      .is-hidden {
+        display: none !important;
+      }
+
+      /* =====================================================================
+         10. SCREEN 3 — ABOUT, ATELIER & SOCIALS (EDITORIAL OPEN FLOW)
+         ===================================================================== */
+      .about-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.05fr);
+        gap: clamp(40px, 6vw, 88px);
+        align-items: start;
+        margin-bottom: clamp(88px, 12vh, 140px);
+      }
+
+      .about-lead {
+        font-family: var(--font-display);
+        font-size: clamp(1.35rem, 2.2vw, 1.86rem);
+        font-weight: 400;
+        line-height: 1.42;
+        color: var(--ink);
+        margin: 22px 0 0;
+        max-width: 34ch;
+        text-wrap: balance;
+        text-shadow: var(--heading-shadow);
+      }
+
+      /* Open editorial index — no heavy rounded wrapper box */
+      .editorial-index {
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid var(--hairline);
+      }
+
+      .editorial-row {
+        display: grid;
+        grid-template-columns: 142px minmax(0, 1fr);
+        gap: 20px;
+        padding-block: 24px;
+        border-bottom: 1px solid var(--hairline);
+        align-items: baseline;
+      }
+
+      .editorial-key {
+        font-family: var(--font-display);
+        font-size: 1.18rem;
+        font-weight: 500;
+        color: var(--ink);
+        line-height: 1.25;
+      }
+
+      .editorial-val {
+        font-size: 0.94rem;
+        line-height: 1.62;
+        color: var(--ink-muted);
+        margin: 0;
+      }
+
+      /* Museum Gallery Section: Мастерская */
+      .atelier-block {
+        margin-bottom: clamp(88px, 12vh, 140px);
+      }
+
+      .atelier-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px 32px;
+        margin-bottom: 34px;
+      }
+
+      .atelier-note {
+        font-size: 0.93rem;
+        line-height: 1.6;
+        color: var(--ink-muted);
+        margin: 0;
+        max-width: 34ch;
+      }
+
+      .atelier-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+      }
+
+      .atelier-frame {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        padding: 14px;
+        border-radius: 20px;
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow-glow);
+        overflow: hidden;
+        text-align: left;
+        transform-style: preserve-3d;
+        --gx: 50%;
+        --gy: 20%;
+        transition:
+          transform 0.45s var(--ease-out-expo),
+          border-color 0.3s ease,
+          background-color 0.3s ease,
+          box-shadow 0.45s var(--ease-out-expo);
+      }
+
+      .atelier-frame::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(
+          circle at var(--gx) var(--gy),
+          rgba(255, 240, 208, 0.30) 0%,
+          rgba(245, 185, 113, 0.10) 34%,
+          transparent 66%
+        );
+        opacity: 0;
+        transition: opacity 0.35s ease;
+        pointer-events: none;
+        z-index: 3;
+      }
+
+      .atelier-frame:hover::before {
+        opacity: 1;
+      }
+
+      .atelier-frame:hover {
+        border-color: rgba(245, 185, 113, 0.54);
+        background: var(--surface-hover);
+        box-shadow: 0 26px 56px -26px rgba(217, 130, 43, 0.38);
+      }
+
+      .atelier-frame.is-placeholder {
+        cursor: default;
+      }
+
+      .atelier-frame.is-ready {
+        cursor: pointer;
+      }
+
+      .atelier-mat {
+        position: relative;
+        flex: 1;
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--hairline);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 26px 20px;
+        text-align: center;
+      }
+
+      .atelier-mat::before,
+      .atelier-mat::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: rgba(245, 185, 113, 0.42);
+        border-style: solid;
+        pointer-events: none;
+        transition: transform 0.38s var(--ease-out-expo), border-color 0.3s ease;
+      }
+
+      .atelier-mat::before {
+        top: 12px;
+        left: 12px;
+        border-width: 1px 0 0 1px;
+      }
+
+      .atelier-mat::after {
+        bottom: 12px;
+        right: 12px;
+        border-width: 0 1px 1px 0;
+      }
+
+      .atelier-frame:hover .atelier-mat::before {
+        transform: translate(-2px, -2px);
+        border-color: rgba(245, 185, 113, 0.82);
+      }
+
+      .atelier-frame:hover .atelier-mat::after {
+        transform: translate(2px, 2px);
+        border-color: rgba(245, 185, 113, 0.82);
+      }
+
+      .atelier-index {
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        color: var(--gold-soft);
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 12px;
+      }
+
+      .atelier-placeholder-title {
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: clamp(1.32rem, 1.7vw, 1.58rem);
+        font-weight: 400;
+        line-height: 1.25;
+        color: var(--ink);
+        margin: 0 0 8px;
+      }
+
+      .atelier-placeholder-sub {
+        font-size: 0.84rem;
+        line-height: 1.5;
+        color: var(--ink-dim);
+        margin: 0;
+      }
+
+      .atelier-art-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.65s var(--ease-out-expo);
+      }
+
+      .atelier-frame.is-ready:hover .atelier-art-img {
+        transform: scale(1.04);
+      }
+
+      .atelier-art-caption {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        padding: 46px 18px 16px;
+        text-align: left;
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          rgba(20, 13, 28, 0.62) 48%,
+          rgba(16, 10, 24, 0.88) 100%
+        );
+        color: #FAF6F0;
+      }
+
+      .atelier-art-title {
+        font-family: var(--font-display);
+        font-size: 1.42rem;
+        font-weight: 500;
+        line-height: 1.18;
+        margin: 0 0 4px;
+        color: #FAF6F0;
+      }
+
+      .atelier-art-meta {
+        font-size: 0.8rem;
+        color: rgba(250, 246, 240, 0.78);
+        margin: 0;
+      }
+
+      /* Fullscreen Lightbox */
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        background: rgba(15, 11, 24, 0.88);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s var(--ease-out-expo);
+      }
+
+      .lightbox.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .lightbox-dialog {
+        position: relative;
+        max-width: min(92vw, 1040px);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        transform: scale(0.95) translateY(12px);
+        transition: transform 0.42s var(--ease-out-expo);
+      }
+
+      .lightbox.is-open .lightbox-dialog {
+        transform: scale(1) translateY(0);
+      }
+
+      .lightbox-img {
+        max-width: 100%;
+        max-height: 76vh;
+        width: auto;
+        height: auto;
+        border-radius: 14px;
+        border: 1px solid rgba(245, 185, 113, 0.28);
+        box-shadow: 0 32px 80px -24px rgba(0, 0, 0, 0.75);
+        object-fit: contain;
+      }
+
+      .lightbox-meta {
+        text-align: center;
+        color: #FAF6F0;
+      }
+
+      .lightbox-title {
+        font-family: var(--font-display);
+        font-size: clamp(1.5rem, 2.5vw, 2.1rem);
+        font-weight: 500;
+        margin: 0 0 4px;
+      }
+
+      .lightbox-sub {
+        font-size: 0.9rem;
+        color: rgba(250, 246, 240, 0.74);
+        margin: 0;
+      }
+
+      .lightbox-close {
+        position: fixed;
+        top: 22px;
+        right: 24px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #FAF6F0;
+        background: rgba(255, 250, 242, 0.10);
+        border: 1px solid rgba(245, 185, 113, 0.30);
+        font-size: 1.15rem;
+        transition: background-color 0.2s ease, transform 0.25s var(--ease-out-expo);
+      }
+
+      .lightbox-close:hover {
+        background: rgba(245, 185, 113, 0.24);
+        transform: rotate(90deg);
+      }
+
+      /* Socials Section (Preserved Twitch featured + 2x2 grid, elevated studio typography) */
+      .socials-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 30px;
+      }
+
+      .socials-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .social-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 26px 28px;
+        border-radius: 20px;
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--shadow-glow);
+        overflow: hidden;
+        transform-style: preserve-3d;
+        --gx: 50%;
+        --gy: 20%;
+        transition:
+          transform 0.42s var(--ease-out-expo),
+          opacity 0.32s ease,
+          border-color 0.28s ease,
+          background-color 0.28s ease,
+          box-shadow 0.42s var(--ease-out-expo);
+      }
+
+      .social-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(
+          circle at var(--gx) var(--gy),
+          rgba(255, 240, 206, 0.22) 0%,
+          rgba(245, 185, 113, 0.08) 36%,
+          transparent 66%
+        );
+        opacity: 0;
+        transition: opacity 0.32s ease;
+        pointer-events: none;
+      }
+
+      .social-card:hover::before {
+        opacity: 1;
+      }
+
+      .social-card.is-featured {
+        grid-column: span 2;
+        padding: 30px 32px;
+      }
+
+      @media (hover: hover) {
+        .socials-grid:hover .social-card:not(:hover) {
+          opacity: 0.56;
+        }
+      }
+
+      .social-card:hover {
+        border-color: rgba(245, 185, 113, 0.54);
+        background: var(--surface-hover);
+        box-shadow: 0 24px 52px -24px rgba(217, 130, 43, 0.38);
+      }
+
+      .social-body {
+        min-width: 0;
+        transform: translateZ(18px);
+      }
+
+      .social-name {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 1.48rem;
+        font-weight: 500;
+        line-height: 1.18;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+
+      .social-card.is-featured .social-name {
+        font-size: 1.76rem;
+      }
+
+      .social-desc {
+        font-size: 0.91rem;
+        line-height: 1.54;
+        color: var(--ink-muted);
+        margin: 0;
+      }
+
+      .social-aside {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 10px;
+        text-align: right;
+        transform: translateZ(22px);
+      }
+
+      .social-mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ink);
+        background: rgba(245, 185, 113, 0.12);
+        border: 1px solid var(--surface-border);
+        transition:
+          transform 0.4s var(--ease-out-expo),
+          border-color 0.28s ease,
+          background-color 0.28s ease;
+      }
+
+      .social-mark svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .social-card:hover .social-mark {
+        transform: scale(1.06);
+        border-color: rgba(245, 185, 113, 0.56);
+        background: rgba(245, 185, 113, 0.20);
+      }
+
+      .social-handle {
+        position: relative;
+        display: inline-block;
+        font-size: 0.81rem;
+        font-weight: 500;
+        color: var(--ink-dim);
+        padding-bottom: 3px;
+        transition: color 0.25s ease;
+      }
+
+      .social-handle::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: var(--gold-soft);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.38s var(--ease-out-expo);
+      }
+
+      .social-card:hover .social-handle {
+        color: var(--ink);
+      }
+
+      .social-card:hover .social-handle::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      /* =====================================================================
+         11. SCREEN 4 — OPEN TWILIGHT CLOSING & BOTTOM-PINNED FOOTER
+         ===================================================================== */
+      .community-screen {
+        min-height: calc(100svh - var(--header-h));
+        display: flex;
+        flex-direction: column;
+        padding-top: clamp(72px, 11vh, 132px);
+        padding-bottom: 24px;
+      }
+
+      .community-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      /* Open editorial closing directly over the starry twilight sky — no heavy card box */
+      .community-stage {
+        max-width: 680px;
+        width: 100%;
+        margin: auto;
+        text-align: center;
+        padding-block: 24px;
+      }
+
+      .community-stage .section-title {
+        font-size: clamp(2.8rem, 6vw, 5rem);
+      }
+
+      .community-stage .section-lead {
+        margin-inline: auto;
+        margin-bottom: 36px;
+        max-width: 42ch;
+      }
+
+      .community-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .site-footer {
+        margin-top: clamp(48px, 7vh, 84px);
+        padding-top: 22px;
+        padding-bottom: 4px;
+        border-top: 1px solid var(--hairline);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px 28px;
+        font-size: 0.86rem;
+        color: var(--ink-dim);
+      }
+
+      .footer-copy {
+        margin: 0;
+        color: var(--ink-muted);
+      }
+
+      .footer-credits {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 20px;
+      }
+
+      .credit-link {
+        position: relative;
+        color: var(--ink-muted);
+        font-weight: 500;
+        padding-block: 4px;
+        transition: color 0.25s ease, text-shadow 0.25s ease;
+        white-space: nowrap;
+      }
+
+      .credit-link::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 1px;
+        background: linear-gradient(90deg, var(--gold-soft), var(--gold));
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.35s var(--ease-out-expo);
+      }
+
+      .credit-link:hover {
+        color: #F5B971;
+        text-shadow: 0 0 18px rgba(245, 185, 113, 0.5);
+      }
+
+      .credit-link:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      .credit-sep {
+        opacity: 0.36;
+      }
+
+      /* =====================================================================
+         12. SCROLL-REVEAL CHOREOGRAPHY
+         ===================================================================== */
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px) scale(0.985);
+        filter: blur(4px);
+        transition:
+          opacity 0.85s var(--ease-out-expo),
+          transform 0.9s var(--ease-out-expo),
+          filter 0.85s var(--ease-out-expo);
+        will-change: opacity, transform, filter;
+      }
+
+      /* Magazine-editorial unfurl from center for gallery & 3D social cards */
+      .reveal-center {
+        transform: translateY(14px) scale(0.92);
+        transform-origin: center center;
+      }
+
+      .reveal.is-visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+
+      /* =====================================================================
+         13. RESPONSIVE BREAKPOINTS (320px – 1920px)
+         ===================================================================== */
+      @media (max-width: 1120px) {
+        .sun-rail {
+          display: none;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .about-grid {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+
+        .atelier-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .socials-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .social-card.is-featured {
+          grid-column: span 1;
+          padding: 24px 24px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        :root {
+          --header-h: 58px;
+        }
+
+        .header-inner,
+        .container {
+          padding-inline: 20px;
+        }
+
+        .header-nav {
+          display: none;
+        }
+
+        .brand-mark {
+          font-size: 1.38rem;
+        }
+
+        .header-cta {
+          padding: 7px 14px;
+          font-size: 0.82rem;
+        }
+
+        .hero-screen {
+          padding-top: calc(var(--header-h) + 34px);
+          padding-bottom: 64px;
+        }
+
+        .avatar-showcase {
+          width: 112px;
+          height: 112px;
+          margin-bottom: 18px;
+        }
+
+        .avatar-frame {
+          width: 102px;
+          height: 102px;
+        }
+
+        .hero-title {
+          font-size: clamp(2.6rem, 12.5vw, 4rem);
+          letter-spacing: 0.03em;
+        }
+
+        .hero-actions,
+        .community-actions {
+          width: 100%;
+          flex-direction: column;
+        }
+
+        .hero-actions .btn,
+        .community-actions .btn {
+          width: 100%;
+          max-width: 340px;
+        }
+
+        .screen {
+          padding-block: 70px;
+        }
+
+        .player-shell {
+          padding: 6px;
+          border-radius: 18px;
+        }
+
+        .player-stage {
+          border-radius: 13px;
+        }
+
+        .play-trigger {
+          width: 58px;
+          height: 58px;
+        }
+
+        .play-trigger svg {
+          width: 19px;
+          height: 19px;
+        }
+
+        .player-preview {
+          padding: 16px;
+        }
+
+        .player-live-chip {
+          top: 12px;
+          left: 12px;
+          padding: 5px 10px;
+          font-size: 0.72rem;
+        }
+
+        .player-caption-bar {
+          left: 14px;
+          right: 14px;
+          bottom: 12px;
+        }
+
+        .player-preview-title {
+          font-size: 1.05rem;
+          margin-bottom: 2px;
+        }
+
+        .player-preview-sub {
+          font-size: 0.78rem;
+        }
+
+        .editorial-row {
+          grid-template-columns: 1fr;
+          gap: 6px;
+          padding-block: 18px;
+        }
+
+        .atelier-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .atelier-frame {
+          aspect-ratio: 4 / 3;
+          padding: 12px;
+          border-radius: 18px;
+        }
+
+        .social-card {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 20px 20px;
+          border-radius: 18px;
+        }
+
+        .social-aside {
+          align-items: flex-end;
+          gap: 8px;
+        }
+
+        .social-mark {
+          width: 34px;
+          height: 34px;
+          border-radius: 10px;
+        }
+
+        .site-footer {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .live-status-pill {
+          max-width: calc(100vw - 40px);
+          padding: 6px 13px;
+          font-size: 0.78rem;
+        }
+
+        .status-meta {
+          max-width: 155px;
+        }
+
+        .hero-title {
+          font-size: clamp(2.2rem, 11.8vw, 2.85rem);
+        }
+
+        .social-name {
+          font-size: 1.42rem;
+        }
+
+        .social-desc {
+          font-size: 0.87rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .dawn-veil {
+          display: none;
+        }
+
+        .mask-line-inner,
+        .hero-stagger,
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+          filter: none !important;
+          transition: none !important;
+        }
+
+        .avatar-halo,
+        .play-trigger::after,
+        .live-status-pill.is-live .status-dot::after {
+          animation: none !important;
+        }
+
+        .btn:hover .btn-roll-line,
+        .header-cta:hover .btn-roll-line {
+          transform: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body data-phase="0">
+    <!-- Fullscreen living sky, sun arc, parallax savannah & twilight fireflies -->
+    <canvas id="sky-scene" data-testid="sky-canvas" aria-hidden="true"></canvas>
+
+    <!-- Tactile 35mm atmospheric grain -->
+    <div class="film-grain" aria-hidden="true"></div>
+
+    <!-- Dawn arrival veil -->
+    <div class="dawn-veil" aria-hidden="true"></div>
+
+    <!-- Fixed 3-zone header -->
+    <header class="site-header" role="banner">
+      <div class="header-inner">
+        <a href="#hero" class="brand-mark" data-scroll-to="#hero">xaxaomega</a>
+
+        <nav class="header-nav" aria-label="Навигация по странице">
+          <a href="#hero" class="nav-link is-active" data-scroll-to="#hero" data-nav-phase="0">Главная</a>
+          <a href="#stream" class="nav-link" data-scroll-to="#stream" data-nav-phase="1">Эфир</a>
+          <a href="#about" class="nav-link" data-scroll-to="#about" data-nav-phase="2">О канале</a>
+          <a href="#atelier" class="nav-link" data-scroll-to="#atelier">Мастерская</a>
+          <a href="#socials" class="nav-link" data-scroll-to="#socials" data-nav-phase="3">Ссылки</a>
+        </nav>
+
+        <div class="header-action">
+          <a
+            href="https://www.twitch.tv/xaxaomega"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="header-cta"
+          >
+            <span class="btn-roll">
+              <span class="btn-roll-line">Twitch</span>
+              <span class="btn-roll-line" aria-hidden="true">Twitch</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Delicate desktop-only vertical sun scale -->
+    <aside class="sun-rail" aria-label="Ход солнца по секциям">
+      <div class="sun-rail-track-wrap">
+        <div class="sun-rail-line" aria-hidden="true">
+          <div class="sun-rail-fill" id="sun-rail-fill"></div>
+        </div>
+        <div class="sun-rail-orb" id="sun-rail-orb" aria-hidden="true"></div>
+
+        <button type="button" class="sun-stop is-current" data-scroll-to="#hero" data-phase-stop="0">
+          <span class="sun-stop-label">Утро</span>
+          <span class="sun-stop-tick" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="sun-stop" data-scroll-to="#stream" data-phase-stop="1">
+          <span class="sun-stop-label">Золотой час</span>
+          <span class="sun-stop-tick" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="sun-stop" data-scroll-to="#about" data-phase-stop="2">
+          <span class="sun-stop-label">Закат</span>
+          <span class="sun-stop-tick" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="sun-stop" data-scroll-to="#community" data-phase-stop="3">
+          <span class="sun-stop-label">Сумерки</span>
+          <span class="sun-stop-tick" aria-hidden="true"></span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main editorial experience -->
+    <main class="page-content">
+      <!-- SCREEN 1: HERO -->
+      <section id="hero" class="screen hero-screen" aria-label="Главный экран">
+        <div class="container">
+          <div class="hero-inner">
+            <div class="avatar-showcase hero-stagger" data-delay="1">
+              <div class="avatar-halo" aria-hidden="true"></div>
+              <div class="avatar-frame">
+                <div class="avatar-inner" id="avatar-wrap">
+                  <img
+                    id="streamer-avatar"
+                    class="avatar-img"
+                    src="https://static-cdn.jtvnw.net/jtv_user_pictures/db4e7087-4b58-4064-853c-962495f3b38d-profile_image-600x600.png"
+                    alt="Аватар канала xaxaomega"
+                    referrerpolicy="no-referrer"
+                    width="120"
+                    height="120"
+                  />
+                  <span class="avatar-fallback-monogram" aria-hidden="true">XO</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="live-status-pill hero-stagger" id="hero-status-pill" data-delay="2" role="status" aria-live="polite">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span class="status-text" id="hero-status-label">Проверяем эфир…</span>
+              <span class="status-sep is-hidden" id="hero-status-sep" aria-hidden="true">·</span>
+              <span class="status-meta is-hidden" id="hero-status-meta"></span>
+            </div>
+
+            <h1 class="hero-title">
+              <span class="mask-line">
+                <span class="mask-line-inner" id="hero-display-name">XAXAOMEGA</span>
+              </span>
+            </h1>
+
+            <p class="hero-bio hero-stagger" id="hero-bio" data-delay="3">
+              Маленький начинающий лев-матерщинник
+            </p>
+            <p class="hero-subtitle hero-stagger" id="hero-tagline" data-delay="3">
+              Стримы, рисунки и разговоры на Twitch.
+            </p>
+
+            <div class="hero-actions hero-stagger" data-delay="4">
+              <a href="#stream" class="btn btn-primary magnetic" data-scroll-to="#stream">
+                <span class="btn-roll">
+                  <span class="btn-roll-line">Смотреть эфир</span>
+                  <span class="btn-roll-line" aria-hidden="true">Смотреть эфир</span>
+                </span>
+              </a>
+
+              <a
+                href="https://www.twitch.tv/xaxaomega"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-secondary magnetic"
+              >
+                <span class="btn-roll">
+                  <span class="btn-roll-line">Канал на Twitch</span>
+                  <span class="btn-roll-line" aria-hidden="true">Канал на Twitch</span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: STREAM STAGE -->
+      <section id="stream" class="screen" aria-labelledby="stream-heading">
+        <div class="container">
+          <div class="stream-header reveal">
+            <div>
+              <h2 id="stream-heading" class="section-title">Эфир</h2>
+              <div class="stream-meta-line" id="stream-meta-line">
+                <span class="stream-live-indicator" id="stream-indicator">
+                  <span class="mini-dot" aria-hidden="true"></span>
+                  <span id="stream-state-text">Офлайн</span>
+                </span>
+                <span aria-hidden="true">·</span>
+                <span id="stream-game-text">twitch.tv/xaxaomega</span>
+              </div>
+            </div>
+
+            <a
+              href="https://www.twitch.tv/xaxaomega"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-action"
+            >
+              Открыть на Twitch
+            </a>
+          </div>
+
+          <div class="player-shell reveal" data-reveal-delay="100">
+            <div class="player-stage" id="player-stage">
+              <img
+                id="player-backdrop-img"
+                class="player-backdrop-img"
+                src="https://static-cdn.jtvnw.net/jtv_user_pictures/378dcefa-f0fb-47f5-a5d4-763ddef14b65-profile_banner-480.png"
+                alt="Превью трансляции xaxaomega"
+                referrerpolicy="no-referrer"
+              />
+              <div class="player-preview" id="player-preview">
+                <span class="player-live-chip" id="player-live-chip">
+                  <span class="chip-dot" aria-hidden="true"></span>
+                  <span id="player-chip-text">Twitch</span>
+                </span>
+                <button
+                  type="button"
+                  class="play-trigger magnetic"
+                  id="player-play-btn"
+                  aria-label="Включить трансляцию xaxaomega"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5.14v14.12c0 .79.87 1.27 1.54.85l10.89-7.06a1 1 0 0 0 0-1.69L9.54 4.29A1 1 0 0 0 8 5.14z" />
+                  </svg>
+                </button>
+                <div class="player-caption-bar">
+                  <div>
+                    <h3 class="player-preview-title" id="player-title">Прямой эфир</h3>
+                    <p class="player-preview-sub" id="player-sub">
+                      Включить плеер Twitch
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="player-iframe-mount" id="player-iframe-mount"></div>
+            </div>
+          </div>
+
+          <div class="player-toolbar">
+            <button type="button" class="text-action is-hidden" id="player-close-btn">
+              Свернуть плеер
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: ABOUT, ATELIER & SOCIALS -->
+      <section id="about" class="screen" aria-labelledby="about-heading">
+        <div class="container">
+          <div class="about-grid">
+            <div class="reveal">
+              <h2 id="about-heading" class="section-title">О канале</h2>
+              <p class="about-lead" id="about-lead"></p>
+            </div>
+
+            <div class="editorial-index reveal" data-reveal-delay="100" id="pillars-list"></div>
+          </div>
+
+          <!-- ATELIER / MUSEUM GALLERY -->
+          <div id="atelier" class="atelier-block" aria-labelledby="atelier-heading">
+            <div class="atelier-head reveal">
+              <h2 id="atelier-heading" class="section-title">Мастерская</h2>
+              <p class="atelier-note">Рисунки и арты — экспозиция готовится.</p>
+            </div>
+            <div class="atelier-grid" id="atelier-grid" aria-label="Работы xaxaomega"></div>
+          </div>
+
+          <!-- SOCIALS (TWITCH TOP + 2x2 BELOW) -->
+          <div id="socials">
+            <div class="socials-head reveal">
+              <h2 class="section-title">Ссылки</h2>
+            </div>
+
+            <div class="socials-grid" id="socials-grid" aria-label="Площадки xaxaomega"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: OPEN TWILIGHT CLOSING & BOTTOM-PINNED FOOTER -->
+      <section id="community" class="screen community-screen" aria-labelledby="community-heading">
+        <div class="container community-container">
+          <div class="community-stage reveal">
+            <h2 id="community-heading" class="section-title">Увидимся на стриме</h2>
+            <p class="section-lead">
+              Заходи в чат на Twitch или в Telegram — там расписание, анонсы и всё свежее.
+            </p>
+            <div class="community-actions" id="community-actions"></div>
+          </div>
+
+          <footer class="site-footer" role="contentinfo">
+            <p class="footer-copy">© 2026 xaxaomega</p>
+            <div class="footer-credits">
+              <a
+                href="https://github.com/wolfik777"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="credit-link"
+              >
+                Made by wolfik777
+              </a>
+              <span class="credit-sep" aria-hidden="true">·</span>
+              <a
+                href="https://t.me/wolfik7777"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="credit-link"
+              >
+                TG: @wolfik7777
+              </a>
+            </div>
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <!-- Fullscreen Lightbox for artworks -->
+    <div
+      class="lightbox"
+      id="artwork-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lightbox-title"
+      aria-hidden="true"
+    >
+      <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Закрыть просмотр">
+        ✕
+      </button>
+      <div class="lightbox-dialog">
+        <img class="lightbox-img" id="lightbox-img" src="" alt="" referrerpolicy="no-referrer" />
+        <div class="lightbox-meta">
+          <h3 class="lightbox-title" id="lightbox-title"></h3>
+          <p class="lightbox-sub" id="lightbox-sub"></p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        'use strict';
+
+        /* =====================================================================
+           1. STREAMER_DATA — REAL VERIFIED DATA FOR xaxaomega
+              Пустой url: "" автоматически скрывает площадку.
+           ===================================================================== */
+        const STREAMER_DATA = {
+          login: 'xaxaomega',
+          displayName: 'XAXAOMEGA',
+          channelUrl: 'https://www.twitch.tv/xaxaomega',
+          avatarFallback:
+            'https://static-cdn.jtvnw.net/jtv_user_pictures/db4e7087-4b58-4064-853c-962495f3b38d-profile_image-600x600.png',
+          bannerFallback:
+            'https://static-cdn.jtvnw.net/jtv_user_pictures/378dcefa-f0fb-47f5-a5d4-763ddef14b65-profile_banner-480.png',
+          bioFallback: 'Маленький начинающий лев-матерщинник',
+          tagline: 'Стримы, рисунки и тёплые вечера на Twitch.',
+          about: {
+            lead: 'xaxaomega — стримерша и художница. Здесь рисуют, проходят игры, общаются в чате и просто отдыхают в своей компании.',
+            rows: [
+              {
+                key: 'Эфиры',
+                text: 'Разговоры в Just Chatting, прохождения игр и живой чат.'
+              },
+              {
+                key: 'Рисование',
+                text: 'Наброски, иллюстрации и новые арты прямо в процессе.'
+              },
+              {
+                key: 'Сообщество',
+                text: 'Дружная компания на Twitch и в Telegram.'
+              }
+            ]
+          },
+          // МАСТЕРСКАЯ: чтобы добавить готовую работу, укажите путь к файлу (например: "art/work-01.jpg")
+          // или ссылку в imageUrl — карточка покажет рисунок и откроет его в полноэкранном просмотре (Lightbox).
+          artworks: [
+            {
+              title: 'Экспозиция готовится',
+              subtitle: 'Скоро здесь появится работа',
+              year: '01',
+              imageUrl: ''
+            },
+            {
+              title: 'Экспозиция готовится',
+              subtitle: 'Скоро здесь появится работа',
+              year: '02',
+              imageUrl: ''
+            },
+            {
+              title: 'Экспозиция готовится',
+              subtitle: 'Скоро здесь появится работа',
+              year: '03',
+              imageUrl: ''
+            }
+          ],
+          donateUrl: 'https://www.donationalerts.com/r/xaxaomega',
+          telegramUrl: 'https://t.me/xaxaomega',
+          socials: [
+            {
+              id: 'twitch',
+              name: 'Twitch',
+              handle: 'twitch.tv/xaxaomega',
+              description: 'Прямые эфиры, игры и разговоры',
+              url: 'https://www.twitch.tv/xaxaomega',
+              featured: true
+            },
+            {
+              id: 'telegram',
+              name: 'Telegram',
+              handle: '@xaxaomega',
+              description: 'Анонсы стримов, рисунки и новости канала',
+              url: 'https://t.me/xaxaomega'
+            },
+            {
+              id: 'donationalerts',
+              name: 'DonationAlerts',
+              handle: 'donationalerts.com',
+              description: 'Поддержать канал на стриме',
+              url: 'https://www.donationalerts.com/r/xaxaomega'
+            },
+            {
+              id: 'memealerts',
+              name: 'MemeAlerts',
+              handle: 'memealerts.com',
+              description: 'Кинуть мем прямо на эфир',
+              url: 'https://memealerts.com/xaxaomega'
+            },
+            {
+              id: 'fetta',
+              name: 'Fetta',
+              handle: 'fetta.app',
+              description: 'Вишлист и подарки',
+              url: 'https://fetta.app/u/xaxaomega'
+            },
+            { id: 'youtube', name: 'YouTube', handle: '', description: '', url: '' },
+            { id: 'discord', name: 'Discord', handle: '', description: '', url: '' },
+            { id: 'boosty', name: 'Boosty', handle: '', description: '', url: '' },
+            { id: 'vk', name: 'VK', handle: '', description: '', url: '' }
+          ]
+        };
+
+        /* =====================================================================
+           2. CONTINUOUS COLOR MATH (SILKY ZERO-SNAP SUNSET)
+           ===================================================================== */
+        const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const smoothstep = (e0, e1, x) => {
+          const t = clamp((x - e0) / (e1 - e0), 0, 1);
+          return t * t * (3 - 2 * t);
+        };
+        const hexToRgb = (hex) => {
+          const c = hex.replace('#', '');
+          return {
+            r: parseInt(c.slice(0, 2), 16),
+            g: parseInt(c.slice(2, 4), 16),
+            b: parseInt(c.slice(4, 6), 16)
+          };
+        };
+        const lerpRgb = (a, b, t) => {
+          const k = clamp(t, 0, 1);
+          return {
+            r: Math.round(lerp(a.r, b.r, k)),
+            g: Math.round(lerp(a.g, b.g, k)),
+            b: Math.round(lerp(a.b, b.b, k))
+          };
+        };
+        const rgbStr = (c, a = 1) =>
+          a >= 1 ? `rgb(${c.r}, ${c.g}, ${c.b})` : `rgba(${c.r}, ${c.g}, ${c.b}, ${a.toFixed(3)})`;
+
+        const SKY_STOPS = [
+          {
+            p: 0.0,
+            top: hexToRgb('#FCF9F3'),
+            mid: hexToRgb('#F8F2E6'),
+            horizon: hexToRgb('#F4EDE0'),
+            sunCore: hexToRgb('#FFFDF7'),
+            sunGlow: hexToRgb('#F7D89B'),
+            savFar: hexToRgb('#D7B596'),
+            savMid: hexToRgb('#A98067'),
+            savNear: hexToRgb('#6E4F45')
+          },
+          {
+            p: 0.24,
+            top: hexToRgb('#FBF2E3'),
+            mid: hexToRgb('#F7E3C6'),
+            horizon: hexToRgb('#F3D3AA'),
+            sunCore: hexToRgb('#FFF9E8'),
+            sunGlow: hexToRgb('#F5B971'),
+            savFar: hexToRgb('#C99776'),
+            savMid: hexToRgb('#8C5D4F'),
+            savNear: hexToRgb('#543435')
+          },
+          {
+            p: 0.44,
+            top: hexToRgb('#F6D8B4'),
+            mid: hexToRgb('#F0B982'),
+            horizon: hexToRgb('#E99D66'),
+            sunCore: hexToRgb('#FFEDC2'),
+            sunGlow: hexToRgb('#F29E52'),
+            savFar: hexToRgb('#B47768'),
+            savMid: hexToRgb('#74454E'),
+            savNear: hexToRgb('#412533')
+          },
+          {
+            p: 0.62,
+            top: hexToRgb('#8D576A'),
+            mid: hexToRgb('#B76B6D'),
+            horizon: hexToRgb('#DF8867'),
+            sunCore: hexToRgb('#FFD9A2'),
+            sunGlow: hexToRgb('#EA8257'),
+            savFar: hexToRgb('#7D4859'),
+            savMid: hexToRgb('#4D2B40'),
+            savNear: hexToRgb('#2D182C')
+          },
+          {
+            p: 0.78,
+            top: hexToRgb('#4E3352'),
+            mid: hexToRgb('#7C4860'),
+            horizon: hexToRgb('#CE7668'),
+            sunCore: hexToRgb('#FFC789'),
+            sunGlow: hexToRgb('#DF7250'),
+            savFar: hexToRgb('#533046'),
+            savMid: hexToRgb('#301B32'),
+            savNear: hexToRgb('#1C1023')
+          },
+          {
+            p: 0.90,
+            top: hexToRgb('#2A1F3D'),
+            mid: hexToRgb('#472F4F'),
+            horizon: hexToRgb('#BA6856'),
+            sunCore: hexToRgb('#FFB274'),
+            sunGlow: hexToRgb('#D06848'),
+            savFar: hexToRgb('#34203B'),
+            savMid: hexToRgb('#1F1429'),
+            savNear: hexToRgb('#120B1B')
+          },
+          {
+            p: 1.0,
+            top: hexToRgb('#1A1528'),
+            mid: hexToRgb('#261E3B'),
+            horizon: hexToRgb('#965446'),
+            sunCore: hexToRgb('#F59F62'),
+            sunGlow: hexToRgb('#C46642'),
+            savFar: hexToRgb('#241933'),
+            savMid: hexToRgb('#161024'),
+            savNear: hexToRgb('#0D0916')
+          }
+        ];
+
+        function sampleSky(progress) {
+          const p = clamp(progress, 0, 1);
+          let idx = 0;
+          while (idx < SKY_STOPS.length - 2 && p > SKY_STOPS[idx + 1].p) idx++;
+          const a = SKY_STOPS[idx];
+          const b = SKY_STOPS[idx + 1];
+          const localT = clamp((p - a.p) / (b.p - a.p), 0, 1);
+          const t = localT * localT * (3 - 2 * localT);
+
+          const sunX = lerp(0.79, 0.52, smoothstep(0.0, 0.92, p));
+          const arcLift = Math.sin(p * Math.PI * 0.65) * 0.04;
+          const sunY = lerp(0.19, 0.96, Math.pow(p, 1.18)) - arcLift;
+          const sunRadiusFactor = lerp(1.0, 1.38, smoothstep(0.2, 0.78, p));
+
+          return {
+            top: lerpRgb(a.top, b.top, t),
+            mid: lerpRgb(a.mid, b.mid, t),
+            horizon: lerpRgb(a.horizon, b.horizon, t),
+            sunCore: lerpRgb(a.sunCore, b.sunCore, t),
+            sunGlow: lerpRgb(a.sunGlow, b.sunGlow, t),
+            savFar: lerpRgb(a.savFar, b.savFar, t),
+            savMid: lerpRgb(a.savMid, b.savMid, t),
+            savNear: lerpRgb(a.savNear, b.savNear, t),
+            savannahAlpha: smoothstep(0.45, 0.72, p),
+            starsAlpha: smoothstep(0.75, 0.95, p),
+            firefliesAlpha: smoothstep(0.77, 0.94, p),
+            dustAlpha: 1 - smoothstep(0.44, 0.72, p),
+            sunX,
+            sunY,
+            sunRadiusFactor
+          };
+        }
+
+        const INK_LIGHT = hexToRgb('#1E1916');
+        const INK_DARK = hexToRgb('#FAF6F0');
+        const SURF_LIGHT = hexToRgb('#FFFDF9');
+        const SURF_DARK = hexToRgb('#1B1326');
+        const HDR_LIGHT = hexToRgb('#FCF9F3');
+        const HDR_DARK = hexToRgb('#1A1426');
+        const BDR_LIGHT = hexToRgb('#B88B58');
+        const BDR_DARK = hexToRgb('#F5B971');
+        const BTN_BG_LIGHT = hexToRgb('#1E1916');
+        const BTN_BG_DARK = hexToRgb('#FAF6F0');
+        const BTN_INK_LIGHT = hexToRgb('#FCF9F3');
+        const BTN_INK_DARK = hexToRgb('#1A1426');
+
+        const rootStyle = document.documentElement.style;
+        const themeMeta = document.querySelector('meta[name="theme-color"]');
+        const railFill = document.getElementById('sun-rail-fill');
+        const railOrb = document.getElementById('sun-rail-orb');
+        const sunStops = Array.from(document.querySelectorAll('[data-phase-stop]'));
+        const navLinks = Array.from(document.querySelectorAll('[data-nav-phase]'));
+
+        let lastPhaseIdx = -1;
+        let lastThemeP = -1;
+
+        function applyAdaptiveTheme(p, sky, force = false) {
+          if (!force && Math.abs(p - lastThemeP) < 0.0005) return;
+          lastThemeP = p;
+
+          const surfaceT = smoothstep(0.46, 0.64, p);
+          const inkT = smoothstep(0.50, 0.62, p);
+          const darkness = smoothstep(0.44, 0.72, p);
+
+          const ink = lerpRgb(INK_LIGHT, INK_DARK, inkT);
+          const surfaceBg = lerpRgb(SURF_LIGHT, SURF_DARK, surfaceT);
+          const crossoverBoost = Math.sin(clamp((p - 0.42) / 0.34, 0, 1) * Math.PI) * 0.16;
+          const surfaceAlpha = clamp(lerp(0.76, 0.58, surfaceT) + crossoverBoost, 0.54, 0.90);
+          const surfaceHoverAlpha = clamp(surfaceAlpha + 0.12, 0.66, 0.94);
+
+          const headerBg = lerpRgb(HDR_LIGHT, HDR_DARK, surfaceT);
+          const headerAlpha = clamp(lerp(0.80, 0.72, surfaceT) + crossoverBoost * 0.5, 0.68, 0.90);
+          const borderRgb = lerpRgb(BDR_LIGHT, BDR_DARK, darkness);
+          const btnPrimaryBg = lerpRgb(BTN_BG_LIGHT, BTN_BG_DARK, inkT);
+          const btnPrimaryInk = lerpRgb(BTN_INK_LIGHT, BTN_INK_DARK, inkT);
+          const shadowAlpha = (inkT * 0.40).toFixed(3);
+
+          rootStyle.setProperty('--ink', rgbStr(ink));
+          rootStyle.setProperty('--ink-muted', rgbStr(ink, lerp(0.72, 0.80, inkT)));
+          rootStyle.setProperty('--ink-dim', rgbStr(ink, lerp(0.52, 0.62, inkT)));
+          rootStyle.setProperty('--surface', rgbStr(surfaceBg, surfaceAlpha));
+          rootStyle.setProperty('--surface-hover', rgbStr(surfaceBg, surfaceHoverAlpha));
+          rootStyle.setProperty('--surface-border', rgbStr(borderRgb, lerp(0.20, 0.24, darkness)));
+          rootStyle.setProperty('--hairline', rgbStr(ink, lerp(0.11, 0.16, inkT)));
+          rootStyle.setProperty('--header-bg', rgbStr(headerBg, headerAlpha));
+          rootStyle.setProperty('--header-border', rgbStr(borderRgb, lerp(0.14, 0.20, darkness)));
+          rootStyle.setProperty('--btn-primary-bg', rgbStr(btnPrimaryBg));
+          rootStyle.setProperty('--btn-primary-ink', rgbStr(btnPrimaryInk));
+          rootStyle.setProperty(
+            '--btn-secondary-bg',
+            rgbStr(surfaceBg, clamp(surfaceAlpha - 0.12, 0.42, 0.80))
+          );
+          rootStyle.setProperty(
+            '--heading-shadow',
+            inkT > 0.02 ? `0 4px 28px rgba(18, 11, 28, ${shadowAlpha})` : 'none'
+          );
+          rootStyle.setProperty('--sun-sheen-x', `${(sky.sunX * 100).toFixed(1)}%`);
+          rootStyle.setProperty('--sun-sheen-y', `${(clamp(sky.sunY, 0, 1) * 100).toFixed(1)}%`);
+          rootStyle.setProperty('--scroll-p', p.toFixed(4));
+
+          const phaseIdx = p < 0.28 ? 0 : p < 0.58 ? 1 : p < 0.85 ? 2 : 3;
+          if (phaseIdx !== lastPhaseIdx) {
+            lastPhaseIdx = phaseIdx;
+            document.body.dataset.phase = String(phaseIdx);
+            sunStops.forEach((btn) => {
+              btn.classList.toggle('is-current', Number(btn.dataset.phaseStop) === phaseIdx);
+            });
+            navLinks.forEach((link) => {
+              link.classList.toggle('is-active', Number(link.dataset.navPhase) === phaseIdx);
+            });
+            if (themeMeta) {
+              const phaseHex = ['#FCF9F3', '#F6D8B4', '#4E3352', '#1A1528'][phaseIdx];
+              themeMeta.setAttribute('content', phaseHex);
+            }
+          }
+
+          if (railFill && railOrb) {
+            railFill.style.transform = `scaleY(${p.toFixed(4)})`;
+            railOrb.style.transform = `translateY(${(p * 198).toFixed(1)}px)`;
+          }
+        }
+
+        /* =====================================================================
+           3. RENDER CONTENT FROM STREAMER_DATA
+           ===================================================================== */
+        function renderContentFromConfig() {
+          const nameEl = document.getElementById('hero-display-name');
+          const bioEl = document.getElementById('hero-bio');
+          const taglineEl = document.getElementById('hero-tagline');
+          const avatarImg = document.getElementById('streamer-avatar');
+          const avatarWrap = document.getElementById('avatar-wrap');
+
+          if (nameEl) nameEl.textContent = STREAMER_DATA.displayName;
+          if (bioEl) bioEl.textContent = STREAMER_DATA.bioFallback;
+          if (taglineEl) taglineEl.textContent = STREAMER_DATA.tagline;
+
+          if (avatarImg && avatarWrap) {
+            avatarImg.src = STREAMER_DATA.avatarFallback;
+            avatarImg.addEventListener('error', () => avatarWrap.classList.add('is-fallback'));
+            avatarImg.addEventListener('load', () => avatarWrap.classList.remove('is-fallback'));
+          }
+
+          // About
+          const leadEl = document.getElementById('about-lead');
+          const pillarsEl = document.getElementById('pillars-list');
+          if (leadEl) leadEl.textContent = STREAMER_DATA.about.lead;
+          if (pillarsEl) {
+            pillarsEl.innerHTML = STREAMER_DATA.about.rows
+              .map(
+                (row) => `
+                <article class="editorial-row">
+                  <span class="editorial-key">${row.key}</span>
+                  <p class="editorial-val">${row.text}</p>
+                </article>`
+              )
+              .join('');
+          }
+
+          // Atelier (Мастерская)
+          const atelierGrid = document.getElementById('atelier-grid');
+          if (atelierGrid && Array.isArray(STREAMER_DATA.artworks)) {
+            atelierGrid.innerHTML = STREAMER_DATA.artworks
+              .map((art, idx) => {
+                const indexLabel = art.year || String(idx + 1).padStart(2, '0');
+                const hasImage = typeof art.imageUrl === 'string' && art.imageUrl.trim().length > 0;
+                if (hasImage) {
+                  return `
+                    <button
+                      type="button"
+                      class="atelier-frame is-ready tilt-card reveal reveal-center"
+                      data-reveal-delay="${idx * 90}"
+                      data-art-index="${idx}"
+                      aria-label="Открыть работу: ${art.title}"
+                    >
+                      <div class="atelier-mat">
+                        <img
+                          class="atelier-art-img"
+                          src="${art.imageUrl}"
+                          alt="${art.title}"
+                          loading="lazy"
+                          referrerpolicy="no-referrer"
+                        />
+                        <div class="atelier-art-caption">
+                          <h3 class="atelier-art-title">${art.title}</h3>
+                          <p class="atelier-art-meta">${art.subtitle ? `${art.subtitle} · ` : ''}${indexLabel}</p>
+                        </div>
+                      </div>
+                    </button>`;
+                }
+                return `
+                  <article
+                    class="atelier-frame is-placeholder tilt-card reveal reveal-center"
+                    data-reveal-delay="${idx * 90}"
+                  >
+                    <div class="atelier-mat">
+                      <span class="atelier-index">${indexLabel}</span>
+                      <h3 class="atelier-placeholder-title">${art.title} · ${indexLabel}</h3>
+                      <p class="atelier-placeholder-sub">${art.subtitle}</p>
+                    </div>
+                  </article>`;
+              })
+              .join('');
+          }
+
+          const SOCIAL_MARKS = {
+            twitch:
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h16v11l-4 4h-4l-3 3v-3H5V3z"/><path d="M11 8v4"/><path d="M16 8v4"/></svg>',
+            telegram:
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4L3 11.4l6.2 2.2L18.5 7l-6.6 8.4V20l3.2-3.1 4.1 2.1L21 4z"/></svg>',
+            donationalerts:
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.8-7.5-10.2A4.3 4.3 0 0 1 12 7.5a4.3 4.3 0 0 1 7.5 2.8c0 5.4-7.5 10.2-7.5 10.2z"/></svg>',
+            memealerts:
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 5.4L20 10.5l-4.5 3.6 1.4 5.9L12 16.9 7.1 20l1.4-5.9L4 10.5l5.8-2.1L12 3z"/></svg>',
+            fetta:
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11.5" rx="2"/><path d="M12 9v11.5"/><path d="M3.5 13h17"/><path d="M12 9c-1.8 0-4.2-.8-4.2-2.7a2.1 2.1 0 0 1 4.2-.3"/><path d="M12 9c1.8 0 4.2-.8 4.2-2.7a2.1 2.1 0 0 0-4.2-.3"/></svg>'
+          };
+
+          // Socials (Twitch featured top + 2x2 below; content left, emblem + handle right)
+          const socialsGrid = document.getElementById('socials-grid');
+          const activeSocials = STREAMER_DATA.socials.filter(
+            (s) => typeof s.url === 'string' && s.url.trim().length > 0
+          );
+
+          if (socialsGrid) {
+            socialsGrid.innerHTML = activeSocials
+              .map((s, idx) => {
+                const featuredClass = s.featured && activeSocials.length % 2 === 1 ? ' is-featured' : '';
+                const mark = SOCIAL_MARKS[s.id] || '';
+                return `
+                  <a
+                    href="${s.url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-card tilt-card reveal reveal-center${featuredClass}"
+                    data-reveal-delay="${idx * 85}"
+                  >
+                    <div class="social-body">
+                      <span class="social-name">${s.name}</span>
+                      <p class="social-desc">${s.description}</p>
+                    </div>
+                    <div class="social-aside">
+                      ${mark ? `<span class="social-mark">${mark}</span>` : ''}
+                      ${s.handle ? `<span class="social-handle">${s.handle}</span>` : ''}
+                    </div>
+                  </a>`;
+              })
+              .join('');
+          }
+
+          // Closing CTAs
+          const communityActions = document.getElementById('community-actions');
+          if (communityActions) {
+            const hasDonate = Boolean(STREAMER_DATA.donateUrl && STREAMER_DATA.donateUrl.trim());
+            const primaryHref = hasDonate ? STREAMER_DATA.donateUrl : STREAMER_DATA.channelUrl;
+            const primaryLabel = hasDonate ? 'Поддержать канал' : 'Перейти на Twitch';
+            const secondaryHref =
+              STREAMER_DATA.telegramUrl && STREAMER_DATA.telegramUrl.trim()
+                ? STREAMER_DATA.telegramUrl
+                : STREAMER_DATA.channelUrl;
+            const secondaryLabel =
+              STREAMER_DATA.telegramUrl && STREAMER_DATA.telegramUrl.trim()
+                ? 'Telegram'
+                : 'Twitch';
+
+            communityActions.innerHTML = `
+              <a
+                href="${primaryHref}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-gold magnetic"
+              >
+                <span class="btn-roll">
+                  <span class="btn-roll-line">${primaryLabel}</span>
+                  <span class="btn-roll-line" aria-hidden="true">${primaryLabel}</span>
+                </span>
+              </a>
+              <a
+                href="${secondaryHref}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-secondary magnetic"
+              >
+                <span class="btn-roll">
+                  <span class="btn-roll-line">${secondaryLabel}</span>
+                  <span class="btn-roll-line" aria-hidden="true">${secondaryLabel}</span>
+                </span>
+              </a>`;
+          }
+        }
+
+        /* =====================================================================
+           4. LIVE TWITCH STATUS (api.ivr.fi)
+           ===================================================================== */
+        function applyChannelStatus(data) {
+          const pill = document.getElementById('hero-status-pill');
+          const statusLabel = document.getElementById('hero-status-label');
+          const statusSep = document.getElementById('hero-status-sep');
+          const statusMeta = document.getElementById('hero-status-meta');
+          const avatarImg = document.getElementById('streamer-avatar');
+          const bioEl = document.getElementById('hero-bio');
+
+          const streamIndicator = document.getElementById('stream-indicator');
+          const streamStateText = document.getElementById('stream-state-text');
+          const streamGameText = document.getElementById('stream-game-text');
+          const playerTitle = document.getElementById('player-title');
+          const playerSub = document.getElementById('player-sub');
+          const playerBackdrop = document.getElementById('player-backdrop-img');
+          const playerLiveChip = document.getElementById('player-live-chip');
+          const playerChipText = document.getElementById('player-chip-text');
+
+          const bannerUrl =
+            (data && data.banner && data.banner.trim()) || STREAMER_DATA.bannerFallback;
+
+          if (!data) {
+            if (pill) pill.classList.remove('is-live');
+            if (statusLabel) statusLabel.textContent = 'Не в эфире';
+            if (streamIndicator) streamIndicator.classList.remove('is-live');
+            if (streamStateText) streamStateText.textContent = 'Не в эфире';
+            if (playerTitle) playerTitle.textContent = 'До следующего стрима';
+            if (playerLiveChip) playerLiveChip.classList.remove('is-live');
+            if (playerChipText) playerChipText.textContent = 'Twitch';
+            if (playerBackdrop) playerBackdrop.src = bannerUrl;
+            return;
+          }
+
+          if (data.logo && avatarImg) avatarImg.src = data.logo;
+          if (data.bio && data.bio.trim() && bioEl) bioEl.textContent = data.bio.trim();
+
+          const stream = data.stream;
+          const isLive = Boolean(stream && stream.type === 'live');
+          const gameName = stream && stream.game && stream.game.displayName ? stream.game.displayName : '';
+          const streamTitle = stream && stream.title ? stream.title.trim() : '';
+          const viewers =
+            stream && typeof stream.viewersCount === 'number' ? stream.viewersCount : null;
+          const isLocal = window.location.protocol === 'file:';
+
+          if (isLive) {
+            if (pill) pill.classList.add('is-live');
+            if (statusLabel) statusLabel.textContent = 'В эфире';
+            if (gameName && statusMeta && statusSep) {
+              statusMeta.textContent = viewers !== null ? `${gameName} · ${viewers}` : gameName;
+              statusSep.classList.remove('is-hidden');
+              statusMeta.classList.remove('is-hidden');
+            }
+            if (streamIndicator) streamIndicator.classList.add('is-live');
+            if (streamStateText) {
+              streamStateText.textContent =
+                viewers !== null ? `В эфире · ${viewers}` : 'В эфире';
+            }
+            if (streamGameText) streamGameText.textContent = gameName || 'Twitch';
+            if (playerTitle) playerTitle.textContent = streamTitle || 'Прямой эфир';
+            if (playerSub) {
+              playerSub.textContent = isLocal
+                ? 'Открыть стрим на Twitch'
+                : gameName || 'Включить плеер';
+            }
+            if (playerLiveChip) playerLiveChip.classList.add('is-live');
+            if (playerChipText) {
+              playerChipText.textContent =
+                viewers !== null ? `В эфире · ${viewers}` : 'В эфире';
+            }
+            if (playerBackdrop) {
+              const livePreviewUrl = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(
+                STREAMER_DATA.login
+              )}-1280x720.jpg?t=${Math.floor(Date.now() / 60000)}`;
+              playerBackdrop.onerror = () => {
+                playerBackdrop.onerror = null;
+                playerBackdrop.src = bannerUrl;
+              };
+              playerBackdrop.src = livePreviewUrl;
+            }
+          } else {
+            if (pill) pill.classList.remove('is-live');
+            if (statusLabel) statusLabel.textContent = 'Не в эфире';
+            const lastTitle =
+              data.lastBroadcast && data.lastBroadcast.title
+                ? data.lastBroadcast.title.trim()
+                : '';
+            if (streamIndicator) streamIndicator.classList.remove('is-live');
+            if (streamStateText) streamStateText.textContent = 'Не в эфире';
+            if (streamGameText) {
+              streamGameText.textContent = lastTitle ? `Последний стрим: ${lastTitle}` : 'twitch.tv/xaxaomega';
+            }
+            if (playerTitle) playerTitle.textContent = 'До следующего стрима';
+            if (playerSub) {
+              playerSub.textContent = isLocal ? 'Перейти на Twitch' : 'Открыть плеер Twitch';
+            }
+            if (playerLiveChip) playerLiveChip.classList.remove('is-live');
+            if (playerChipText) playerChipText.textContent = 'Офлайн';
+            if (playerBackdrop) playerBackdrop.src = bannerUrl;
+          }
+        }
+
+        async function fetchLiveStatus() {
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 7000);
+            const resp = await fetch(
+              `https://api.ivr.fi/v2/twitch/user?login=${encodeURIComponent(STREAMER_DATA.login)}`,
+              { signal: controller.signal, headers: { Accept: 'application/json' } }
+            );
+            clearTimeout(timer);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const json = await resp.json();
+            const user = Array.isArray(json) ? json[0] : json;
+            applyChannelStatus(user || null);
+          } catch (_err) {
+            applyChannelStatus(null);
+          }
+        }
+
+        /* =====================================================================
+           5. TWITCH PLAYER (DYNAMIC parent ON HTTP/HTTPS, NEW TAB ON file:)
+           ===================================================================== */
+        function setupPlayer() {
+          const playBtn = document.getElementById('player-play-btn');
+          const closeBtn = document.getElementById('player-close-btn');
+          const stage = document.getElementById('player-stage');
+          const mount = document.getElementById('player-iframe-mount');
+
+          const isWeb =
+            (window.location.protocol === 'https:' || window.location.protocol === 'http:') &&
+            Boolean(window.location.hostname);
+
+          if (playBtn) {
+            playBtn.addEventListener('click', () => {
+              if (!isWeb) {
+                const a = document.createElement('a');
+                a.href = STREAMER_DATA.channelUrl;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                return;
+              }
+              if (!mount || !stage) return;
+              const parentHost = encodeURIComponent(window.location.hostname);
+              const src = `https://player.twitch.tv/?channel=${encodeURIComponent(
+                STREAMER_DATA.login
+              )}&parent=${parentHost}&muted=false`;
+              mount.innerHTML = `<iframe src="${src}" title="Трансляция xaxaomega на Twitch" allow="autoplay; fullscreen"></iframe>`;
+              stage.classList.add('is-playing');
+              if (closeBtn) closeBtn.classList.remove('is-hidden');
+            });
+          }
+
+          if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+              if (mount) mount.innerHTML = '';
+              if (stage) stage.classList.remove('is-playing');
+              closeBtn.classList.add('is-hidden');
+            });
+          }
+        }
+
+        /* =====================================================================
+           6. LIVING RETINA CANVAS SCENE (SKY, SUN ARC, SAVANNAH, FIREFLIES)
+           ===================================================================== */
+        const canvas = document.getElementById('sky-scene');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        let vw = window.innerWidth;
+        let vh = window.innerHeight;
+        let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        const pointer = { x: vw * 0.5, y: vh * 0.5, normX: 0, smoothNormX: 0, active: false };
+
+        let dustMotes = [];
+        let stars = [];
+        let fireflies = [];
+        let grassBlades = [];
+
+        function makeGlowSprite(size, innerColor, midColor, outerColor) {
+          const c = document.createElement('canvas');
+          c.width = size;
+          c.height = size;
+          const g = c.getContext('2d');
+          const half = size / 2;
+          const grad = g.createRadialGradient(half, half, 0, half, half, half);
+          grad.addColorStop(0, innerColor);
+          grad.addColorStop(0.35, midColor);
+          grad.addColorStop(1, outerColor);
+          g.fillStyle = grad;
+          g.fillRect(0, 0, size, size);
+          return c;
+        }
+
+        const dustSprite = makeGlowSprite(
+          32,
+          'rgba(229, 164, 78, 0.95)',
+          'rgba(235, 178, 96, 0.34)',
+          'rgba(229, 164, 78, 0)'
+        );
+        const fireflySprite = makeGlowSprite(
+          48,
+          'rgba(255, 245, 200, 1)',
+          'rgba(245, 185, 113, 0.48)',
+          'rgba(245, 185, 113, 0)'
+        );
+
+        function seedEntities() {
+          const isMobile = vw <= 768;
+          const dustCount = isMobile ? 20 : 40;
+          const starCount = isMobile ? 54 : 112;
+          const fireflyCount = isMobile ? 16 : 36;
+          const grassCount = isMobile ? 54 : 114;
+
+          dustMotes = Array.from({ length: dustCount }, () => ({
+            x: Math.random(),
+            y: Math.random(),
+            r: 0.9 + Math.random() * 2.0,
+            vx: (Math.random() - 0.5) * 0.004,
+            vy: -(0.004 + Math.random() * 0.007),
+            phase: Math.random() * Math.PI * 2,
+            alpha: 0.20 + Math.random() * 0.40
+          }));
+
+          stars = Array.from({ length: starCount }, () => ({
+            x: Math.random(),
+            y: Math.random() * 0.66,
+            r: 0.55 + Math.random() * 1.35,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.75 + Math.random() * 1.75,
+            warm: Math.random() > 0.45
+          }));
+
+          fireflies = Array.from({ length: fireflyCount }, () => ({
+            x: Math.random() * vw,
+            y: vh * (0.62 + Math.random() * 0.36),
+            vx: (Math.random() - 0.5) * 14,
+            vy: -(4 + Math.random() * 10),
+            r: 1.6 + Math.random() * 2.2,
+            phase: Math.random() * Math.PI * 2,
+            pulseSpeed: 1.3 + Math.random() * 2.0
+          }));
+
+          grassBlades = Array.from({ length: grassCount }, (_, i) => {
+            const baseRatio = (i + Math.random() * 0.85) / grassCount;
+            return {
+              xRatio: baseRatio,
+              height: (isMobile ? 28 : 42) + Math.random() * (isMobile ? 42 : 66),
+              lean: (Math.random() - 0.5) * 20,
+              thickness: 1.1 + Math.random() * 1.7,
+              phase: Math.random() * Math.PI * 2,
+              speed: 0.85 + Math.random() * 0.95,
+              hasPlume: Math.random() > 0.66
+            };
+          });
+        }
+
+        function resizeCanvas() {
+          vw = window.innerWidth;
+          vh = window.innerHeight;
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          canvas.width = Math.round(vw * dpr);
+          canvas.height = Math.round(vh * dpr);
+          canvas.style.width = `${vw}px`;
+          canvas.style.height = `${vh}px`;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          seedEntities();
+        }
+
+        function drawUmbrellaAcacia(cx, baseY, scale, color) {
+          ctx.save();
+          ctx.translate(cx, baseY);
+          ctx.scale(scale, scale);
+          ctx.fillStyle = color;
+          ctx.strokeStyle = color;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          ctx.beginPath();
+          ctx.moveTo(-11, 22);
+          ctx.quadraticCurveTo(-7, -34, -4, -92);
+          ctx.quadraticCurveTo(0, -112, 4, -92);
+          ctx.quadraticCurveTo(8, -32, 14, 22);
+          ctx.closePath();
+          ctx.fill();
+
+          const boughs = [
+            { x1: -2, y1: -86, cx: -46, cy: -116, x2: -102, y2: -130, w: 6.5 },
+            { x1: -1, y1: -92, cx: -22, cy: -124, x2: -46, y2: -145, w: 5.5 },
+            { x1: 2, y1: -90, cx: 26, cy: -126, x2: 52, y2: -146, w: 5.5 },
+            { x1: 3, y1: -84, cx: 52, cy: -114, x2: 108, y2: -126, w: 6.5 },
+            { x1: 0, y1: -96, cx: 4, cy: -128, x2: 6, y2: -152, w: 4.5 },
+            { x1: -56, y1: -118, cx: -76, cy: -134, x2: -88, y2: -142, w: 3.2 },
+            { x1: 58, y1: -116, cx: 82, cy: -132, x2: 96, y2: -140, w: 3.2 }
+          ];
+
+          for (const b of boughs) {
+            ctx.lineWidth = b.w;
+            ctx.beginPath();
+            ctx.moveTo(b.x1, b.y1);
+            ctx.quadraticCurveTo(b.cx, b.cy, b.x2, b.y2);
+            ctx.stroke();
+          }
+
+          const pads = [
+            { x: -110, y: -134, rx: 46, ry: 11 },
+            { x: -64, y: -146, rx: 56, ry: 13 },
+            { x: -12, y: -156, rx: 64, ry: 15 },
+            { x: 46, y: -150, rx: 60, ry: 14 },
+            { x: 106, y: -134, rx: 48, ry: 11 },
+            { x: -84, y: -139, rx: 34, ry: 9 },
+            { x: 18, y: -162, rx: 46, ry: 11 },
+            { x: 78, y: -141, rx: 36, ry: 9 }
+          ];
+
+          for (const pad of pads) {
+            ctx.beginPath();
+            ctx.ellipse(pad.x, pad.y, pad.rx, pad.ry, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        function drawSavannah(p, sky, time) {
+          if (sky.savannahAlpha <= 0.005) return;
+
+          const a = sky.savannahAlpha;
+          const riseProgress = smoothstep(0.45, 0.80, p);
+          const extraScroll = clamp((p - 0.55) / 0.45, 0, 1);
+          const pxOffset = prefersReducedMotion ? 0 : pointer.smoothNormX;
+
+          // Layer 1: Far misty hills
+          const farLift = lerp(vh * 0.14, 0, riseProgress) - extraScroll * 18;
+          const farBaseY = vh * 0.855 + farLift;
+          const farShift = pxOffset * -10;
+          ctx.save();
+          ctx.globalAlpha = a * 0.72;
+          ctx.fillStyle = rgbStr(sky.savFar);
+          ctx.beginPath();
+          ctx.moveTo(-24, vh + 10);
+          ctx.lineTo(-24, farBaseY + 14);
+          ctx.bezierCurveTo(
+            vw * 0.18 + farShift,
+            farBaseY - 36,
+            vw * 0.36 + farShift,
+            farBaseY + 16,
+            vw * 0.56 + farShift,
+            farBaseY - 22
+          );
+          ctx.bezierCurveTo(
+            vw * 0.74 + farShift,
+            farBaseY - 54,
+            vw * 0.88 + farShift,
+            farBaseY - 12,
+            vw + 24,
+            farBaseY - 26
+          );
+          ctx.lineTo(vw + 24, vh + 10);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // Layer 2: Midground ridge + Umbrella Acacia Trees
+          const midLift = lerp(vh * 0.19, 0, riseProgress) - extraScroll * 32;
+          const midBaseY = vh * 0.905 + midLift;
+          const midShift = pxOffset * -18;
+          const midColor = rgbStr(sky.savMid);
+
+          ctx.save();
+          ctx.globalAlpha = a * 0.94;
+          ctx.fillStyle = midColor;
+          ctx.beginPath();
+          ctx.moveTo(-24, vh + 10);
+          ctx.lineTo(-24, midBaseY - 6);
+          ctx.bezierCurveTo(
+            vw * 0.24 + midShift,
+            midBaseY - 30,
+            vw * 0.46 + midShift,
+            midBaseY + 14,
+            vw * 0.70 + midShift,
+            midBaseY - 14
+          );
+          ctx.bezierCurveTo(
+            vw * 0.84 + midShift,
+            midBaseY - 32,
+            vw * 0.94 + midShift,
+            midBaseY - 18,
+            vw + 24,
+            midBaseY - 10
+          );
+          ctx.lineTo(vw + 24, vh + 10);
+          ctx.closePath();
+          ctx.fill();
+
+          const isMobile = vw <= 768;
+          const mainScale = clamp(vw / 1280, 0.52, 1.15);
+          const acaciaX = (isMobile ? vw * 0.82 : vw * 0.81) + midShift;
+          const acaciaY = midBaseY - (isMobile ? 10 : 14);
+          drawUmbrellaAcacia(acaciaX, acaciaY, mainScale, midColor);
+
+          if (vw > 640) {
+            ctx.globalAlpha = a * 0.60;
+            drawUmbrellaAcacia(
+              vw * 0.13 + farShift,
+              farBaseY - 4,
+              mainScale * 0.46,
+              rgbStr(sky.savFar)
+            );
+          }
+          ctx.restore();
+
+          // Layer 3: Near living tall grass swaying on multi-harmonic wind wave
+          const nearLift = lerp(vh * 0.16, 0, riseProgress) - extraScroll * 16;
+          const groundY = vh + 4 + nearLift * 0.45;
+          const nearShift = pxOffset * -26;
+          const nearColor = rgbStr(sky.savNear);
+
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.fillStyle = nearColor;
+          ctx.beginPath();
+          ctx.moveTo(-24, vh + 10);
+          ctx.lineTo(-24, groundY - 18);
+          ctx.quadraticCurveTo(vw * 0.5, groundY - 28, vw + 24, groundY - 16);
+          ctx.lineTo(vw + 24, vh + 10);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = nearColor;
+          ctx.lineCap = 'round';
+          for (const blade of grassBlades) {
+            const bx = blade.xRatio * (vw + 60) - 30 + nearShift;
+            const by = groundY - 14;
+            const sway = prefersReducedMotion
+              ? 0
+              : Math.sin(time * blade.speed + blade.phase + bx * 0.0075) * 12 +
+                Math.sin(time * 0.52 + bx * 0.0028) * 6;
+            const tipX = bx + blade.lean + sway;
+            const tipY = by - blade.height;
+            const ctrlX = bx + (blade.lean + sway) * 0.42;
+            const ctrlY = by - blade.height * 0.58;
+
+            ctx.lineWidth = blade.thickness;
+            ctx.beginPath();
+            ctx.moveTo(bx, by);
+            ctx.quadraticCurveTo(ctrlX, ctrlY, tipX, tipY);
+            ctx.stroke();
+
+            if (blade.hasPlume) {
+              ctx.beginPath();
+              ctx.ellipse(tipX, tipY, 2.2, 5.4, (blade.lean + sway) * 0.015, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.restore();
+        }
+
+        function renderScene(p, time, dt) {
+          const sky = sampleSky(p);
+
+          if (!prefersReducedMotion) {
+            pointer.smoothNormX += (pointer.normX - pointer.smoothNormX) * Math.min(1, dt * 3.5);
+          }
+
+          // 1. Atmospheric sky gradient
+          const skyGrad = ctx.createLinearGradient(0, 0, 0, vh);
+          skyGrad.addColorStop(0.0, rgbStr(sky.top));
+          skyGrad.addColorStop(0.54, rgbStr(sky.mid));
+          skyGrad.addColorStop(1.0, rgbStr(sky.horizon));
+          ctx.fillStyle = skyGrad;
+          ctx.fillRect(0, 0, vw, vh);
+
+          // 2. Twinkling twilight stars
+          if (sky.starsAlpha > 0.01) {
+            ctx.save();
+            for (const st of stars) {
+              const twinkle = prefersReducedMotion
+                ? 0.8
+                : 0.45 + 0.55 * Math.sin(time * st.speed + st.phase);
+              const alpha = sky.starsAlpha * twinkle * 0.86;
+              if (alpha <= 0.02) continue;
+              ctx.fillStyle = st.warm
+                ? `rgba(255, 241, 214, ${alpha.toFixed(3)})`
+                : `rgba(232, 236, 255, ${alpha.toFixed(3)})`;
+              ctx.beginPath();
+              ctx.arc(st.x * vw, st.y * vh, st.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+
+          // 3. Soft Solar Disc + Atmospheric Scattering Halo
+          const sx = sky.sunX * vw + (prefersReducedMotion ? 0 : pointer.smoothNormX * -8);
+          const sy = sky.sunY * vh;
+          const baseMin = Math.min(vw, vh);
+          const discR = baseMin * 0.064 * sky.sunRadiusFactor;
+          const haloR = baseMin * (0.45 + 0.14 * smoothstep(0.2, 0.78, p));
+
+          const outerHalo = ctx.createRadialGradient(sx, sy, discR * 0.25, sx, sy, haloR);
+          const haloStrength =
+            lerp(0.35, 0.56, smoothstep(0.18, 0.68, p)) * (1 - smoothstep(0.88, 1.0, p) * 0.42);
+          outerHalo.addColorStop(0, rgbStr(sky.sunCore, clamp(haloStrength + 0.28, 0, 0.92)));
+          outerHalo.addColorStop(0.26, rgbStr(sky.sunGlow, haloStrength));
+          outerHalo.addColorStop(0.62, rgbStr(sky.sunGlow, haloStrength * 0.26));
+          outerHalo.addColorStop(1, rgbStr(sky.sunGlow, 0));
+          ctx.fillStyle = outerHalo;
+          ctx.fillRect(0, 0, vw, vh);
+
+          const discVisibility = 1 - smoothstep(0.84, 0.96, p);
+          if (discVisibility > 0.01) {
+            const discGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, discR * 1.68);
+            discGrad.addColorStop(0, rgbStr(sky.sunCore, 0.98 * discVisibility));
+            discGrad.addColorStop(0.38, rgbStr(sky.sunCore, 0.78 * discVisibility));
+            discGrad.addColorStop(0.68, rgbStr(sky.sunGlow, 0.28 * discVisibility));
+            discGrad.addColorStop(1, rgbStr(sky.sunGlow, 0));
+            ctx.fillStyle = discGrad;
+            ctx.beginPath();
+            ctx.arc(sx, sy, discR * 1.68, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Warm horizon afterglow ribbon
+          const afterglowAlpha = smoothstep(0.56, 0.86, p) * 0.45;
+          if (afterglowAlpha > 0.01) {
+            const glowGrad = ctx.createRadialGradient(
+              vw * 0.52,
+              vh * 0.94,
+              10,
+              vw * 0.52,
+              vh * 0.94,
+              vw * 0.65
+            );
+            glowGrad.addColorStop(0, `rgba(245, 166, 98, ${afterglowAlpha.toFixed(3)})`);
+            glowGrad.addColorStop(0.45, `rgba(214, 118, 86, ${(afterglowAlpha * 0.42).toFixed(3)})`);
+            glowGrad.addColorStop(1, 'rgba(214, 118, 86, 0)');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(0, vh * 0.45, vw, vh * 0.55);
+          }
+
+          // 4. Morning & golden-hour dust motes
+          if (sky.dustAlpha > 0.01) {
+            ctx.save();
+            for (const mote of dustMotes) {
+              if (!prefersReducedMotion) {
+                mote.x += mote.vx * dt;
+                mote.y += mote.vy * dt;
+                if (mote.y < -0.02) {
+                  mote.y = 1.02;
+                  mote.x = Math.random();
+                }
+                if (mote.x < -0.02) mote.x = 1.02;
+                if (mote.x > 1.02) mote.x = -0.02;
+              }
+              const shimmer = 0.55 + 0.45 * Math.sin(time * 1.2 + mote.phase);
+              const ma = sky.dustAlpha * mote.alpha * shimmer;
+              if (ma <= 0.01) continue;
+              const size = mote.r * 6.8;
+              ctx.globalAlpha = ma;
+              ctx.drawImage(dustSprite, mote.x * vw - size * 0.5, mote.y * vh - size * 0.5, size, size);
+            }
+            ctx.restore();
+          }
+
+          // 5. 3-Layer Parallax Evening Savannah
+          drawSavannah(p, sky, time);
+
+          // 6. Twilight Fireflies
+          if (sky.firefliesAlpha > 0.01) {
+            ctx.save();
+            for (const ff of fireflies) {
+              if (!prefersReducedMotion) {
+                const driftX = Math.sin(time * 0.75 + ff.phase) * 12;
+                ff.x += (ff.vx + driftX) * dt;
+                ff.y += ff.vy * dt;
+
+                if (isFinePointer && pointer.active) {
+                  const dx = pointer.x - ff.x;
+                  const dy = pointer.y - ff.y;
+                  const distSq = dx * dx + dy * dy;
+                  if (distSq < 260 * 260 && distSq > 16) {
+                    const dist = Math.sqrt(distSq);
+                    const pull = (1 - dist / 260) * 32 * dt;
+                    ff.x += (dx / dist) * pull;
+                    ff.y += (dy / dist) * pull;
+                  }
+                }
+
+                if (ff.y < vh * 0.32) {
+                  ff.y = vh * (0.88 + Math.random() * 0.12);
+                  ff.x = Math.random() * vw;
+                }
+                if (ff.x < -20) ff.x = vw + 20;
+                if (ff.x > vw + 20) ff.x = -20;
+              }
+
+              const pulse = prefersReducedMotion
+                ? 0.85
+                : 0.38 + 0.62 * Math.pow(0.5 + 0.5 * Math.sin(time * ff.pulseSpeed + ff.phase), 1.6);
+              const fa = sky.firefliesAlpha * pulse;
+              if (fa <= 0.01) continue;
+              const size = ff.r * 13;
+              ctx.globalAlpha = fa;
+              ctx.drawImage(fireflySprite, ff.x - size * 0.5, ff.y - size * 0.5, size, size);
+            }
+            ctx.restore();
+          }
+
+          applyAdaptiveTheme(p, sky);
+        }
+
+        /* =====================================================================
+           7. SMOOTH INERTIAL DESKTOP SCROLL + SILKY LERP (0.055)
+           ===================================================================== */
+        let currentScrollY = window.scrollY || 0;
+        let targetScrollY = currentScrollY;
+        let inertialActive = false;
+        let smoothProgress = 0;
+
+        function getMaxScroll() {
+          return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        }
+
+        function getRawScrollProgress() {
+          return clamp((window.scrollY || 0) / getMaxScroll(), 0, 1);
+        }
+
+        if (isFinePointer && !prefersReducedMotion) {
+          window.addEventListener(
+            'wheel',
+            (e) => {
+              if (e.ctrlKey || e.metaKey) return;
+              if (e.target && e.target.closest && e.target.closest('#player-iframe-mount')) return;
+              e.preventDefault();
+              if (!inertialActive) {
+                currentScrollY = window.scrollY;
+                targetScrollY = currentScrollY;
+                inertialActive = true;
+              }
+              const delta =
+                e.deltaMode === 1
+                  ? e.deltaY * 32
+                  : e.deltaMode === 2
+                  ? e.deltaY * window.innerHeight
+                  : e.deltaY;
+              targetScrollY = clamp(targetScrollY + delta * 0.92, 0, getMaxScroll());
+            },
+            { passive: false }
+          );
+
+          ['mousedown', 'keydown', 'touchstart'].forEach((evt) => {
+            window.addEventListener(
+              evt,
+              () => {
+                inertialActive = false;
+                currentScrollY = window.scrollY;
+                targetScrollY = currentScrollY;
+              },
+              { passive: true }
+            );
+          });
+        }
+
+        function setupSmoothAnchors() {
+          document.querySelectorAll('[data-scroll-to]').forEach((el) => {
+            el.addEventListener('click', (e) => {
+              const sel = el.getAttribute('data-scroll-to');
+              const target = sel ? document.querySelector(sel) : null;
+              if (!target) return;
+              e.preventDefault();
+              const top =
+                sel === '#hero'
+                  ? 0
+                  : Math.max(0, target.getBoundingClientRect().top + window.scrollY - 68);
+              if (isFinePointer && !prefersReducedMotion) {
+                currentScrollY = window.scrollY;
+                targetScrollY = clamp(top, 0, getMaxScroll());
+                inertialActive = true;
+              } else {
+                window.scrollTo({
+                  top,
+                  behavior: prefersReducedMotion ? 'auto' : 'smooth'
+                });
+              }
+            });
+          });
+        }
+
+        /* =====================================================================
+           8. MAGNETIC BUTTONS, 3D CARD TILT, LIGHTBOX & SCROLL-REVEAL
+           ===================================================================== */
+        function setupMagneticButtons() {
+          if (!isFinePointer || prefersReducedMotion) return;
+          document.querySelectorAll('.magnetic').forEach((btn) => {
+            btn.addEventListener('mousemove', (e) => {
+              const rect = btn.getBoundingClientRect();
+              const dx = ((e.clientX - rect.left) / rect.width - 0.5) * 10;
+              const dy = ((e.clientY - rect.top) / rect.height - 0.5) * 8;
+              btn.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+              btn.style.transform = 'translate3d(0, 0, 0)';
+            });
+          });
+        }
+
+        function setupTiltCards() {
+          if (!isFinePointer || prefersReducedMotion) return;
+          document.querySelectorAll('.tilt-card').forEach((card) => {
+            const maxTilt = card.classList.contains('atelier-frame') ? 6 : 5.2;
+            const handleMove = (e) => {
+              const rect = card.getBoundingClientRect();
+              const px = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+              const py = clamp((e.clientY - rect.top) / rect.height, 0, 1);
+              const rotY = (px - 0.5) * maxTilt * 2;
+              const rotX = (0.5 - py) * maxTilt * 2;
+              card.style.setProperty('--gx', `${(px * 100).toFixed(1)}%`);
+              card.style.setProperty('--gy', `${(py * 100).toFixed(1)}%`);
+              card.style.transform = `perspective(920px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-4px)`;
+            };
+            const handleLeave = () => {
+              card.style.transform = '';
+            };
+            card.addEventListener('pointermove', handleMove);
+            card.addEventListener('pointerleave', handleLeave);
+          });
+        }
+
+        function setupLightbox() {
+          const lb = document.getElementById('artwork-lightbox');
+          const lbImg = document.getElementById('lightbox-img');
+          const lbTitle = document.getElementById('lightbox-title');
+          const lbSub = document.getElementById('lightbox-sub');
+          const lbClose = document.getElementById('lightbox-close');
+          if (!lb || !lbImg) return;
+
+          const open = (art) => {
+            lbImg.src = art.imageUrl;
+            lbImg.alt = art.title;
+            if (lbTitle) lbTitle.textContent = art.title;
+            if (lbSub) lbSub.textContent = [art.subtitle, art.year].filter(Boolean).join(' · ');
+            lb.classList.add('is-open');
+            lb.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+          };
+
+          const close = () => {
+            lb.classList.remove('is-open');
+            lb.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+          };
+
+          document.querySelectorAll('[data-art-index]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const idx = Number(btn.getAttribute('data-art-index'));
+              const art = STREAMER_DATA.artworks[idx];
+              if (art && art.imageUrl) open(art);
+            });
+          });
+
+          if (lbClose) lbClose.addEventListener('click', close);
+          lb.addEventListener('click', (e) => {
+            if (e.target === lb) close();
+          });
+          window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lb.classList.contains('is-open')) close();
+          });
+        }
+
+        function setupScrollReveals() {
+          const items = Array.from(document.querySelectorAll('.reveal'));
+          if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+            items.forEach((el) => el.classList.add('is-visible'));
+            return;
+          }
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                const el = entry.target;
+                const delay = Number(el.dataset.revealDelay || 0);
+                if (delay > 0) el.style.transitionDelay = `${delay}ms`;
+                el.classList.add('is-visible');
+                window.setTimeout(() => {
+                  el.style.transitionDelay = '0ms';
+                }, delay + 950);
+                observer.unobserve(el);
+              });
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -36px 0px' }
+          );
+          items.forEach((el) => observer.observe(el));
+        }
+
+        /* =====================================================================
+           9. MAIN LOOP & BOOT
+           ===================================================================== */
+        let lastFrame = performance.now();
+        let lastDraw = 0;
+
+        function tick(now) {
+          const dt = Math.min((now - lastFrame) / 1000, 0.05);
+          lastFrame = now;
+          const time = now / 1000;
+
+          if (inertialActive) {
+            const diff = targetScrollY - currentScrollY;
+            if (Math.abs(diff) < 0.4) {
+              currentScrollY = targetScrollY;
+              window.scrollTo(0, currentScrollY);
+              inertialActive = false;
+            } else {
+              const ease = 1 - Math.pow(1 - 0.11, dt * 60);
+              currentScrollY += diff * ease;
+              window.scrollTo(0, currentScrollY);
+            }
+          }
+
+          const rawP = getRawScrollProgress();
+          const prevP = smoothProgress;
+          if (prefersReducedMotion) {
+            smoothProgress = rawP;
+          } else {
+            const lerpFactor = 1 - Math.pow(1 - 0.055, dt * 60);
+            smoothProgress += (rawP - smoothProgress) * lerpFactor;
+            if (Math.abs(rawP - smoothProgress) < 0.0003) smoothProgress = rawP;
+          }
+
+          const isScrolling = Math.abs(smoothProgress - prevP) > 0.0001 || inertialActive;
+          const minInterval = isScrolling ? 0 : 32;
+          if (now - lastDraw >= minInterval) {
+            const drawDt = lastDraw ? Math.min((now - lastDraw) / 1000, 0.08) : dt;
+            lastDraw = now;
+            renderScene(smoothProgress, time, drawDt);
+          }
+
+          window.requestAnimationFrame(tick);
+        }
+
+        if (isFinePointer) {
+          window.addEventListener(
+            'mousemove',
+            (e) => {
+              pointer.x = e.clientX;
+              pointer.y = e.clientY;
+              pointer.normX = (e.clientX / Math.max(1, vw) - 0.5) * 2;
+              pointer.active = true;
+            },
+            { passive: true }
+          );
+          window.addEventListener('mouseleave', () => {
+            pointer.active = false;
+            pointer.normX = 0;
+          });
+        }
+
+        function initFilmGrain() {
+          const grainEl = document.querySelector('.film-grain');
+          if (!grainEl) return;
+          const tile = document.createElement('canvas');
+          tile.width = 128;
+          tile.height = 128;
+          const gctx = tile.getContext('2d');
+          if (!gctx) return;
+          const img = gctx.createImageData(128, 128);
+          const data = img.data;
+          for (let i = 0; i < data.length; i += 4) {
+            const v = (Math.random() * 255) | 0;
+            data[i] = v;
+            data[i + 1] = v;
+            data[i + 2] = v;
+            data[i + 3] = 255;
+          }
+          gctx.putImageData(img, 0, 0);
+          grainEl.style.backgroundImage = `url(${tile.toDataURL('image/png')})`;
+        }
+
+        renderContentFromConfig();
+        initFilmGrain();
+        resizeCanvas();
+        smoothProgress = getRawScrollProgress();
+        renderScene(smoothProgress, 0, 0.016);
+
+        setupPlayer();
+        setupSmoothAnchors();
+        setupMagneticButtons();
+        setupTiltCards();
+        setupLightbox();
+        setupScrollReveals();
+        fetchLiveStatus();
+
+        window.addEventListener('resize', () => {
+          resizeCanvas();
+          renderScene(smoothProgress, performance.now() / 1000, 0.016);
+        });
+
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            document.body.classList.add('is-ready');
+          });
+        });
+
+        window.requestAnimationFrame(tick);
+      })();
+    </script>
+  </body>
+</html>
