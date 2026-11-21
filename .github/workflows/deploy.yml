@@ -1,0 +1,70 @@
+name: Deploy site & build gallery
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate gallery.json from root images
+        run: |
+          python3 - << 'EOF'
+          import json, os, subprocess
+
+          EXTS = (".jpg", ".jpeg", ".png", ".webp")
+          PREFIXES = {"art": "artist", "арт": "artist", "ai": "ai", "ии": "ai"}
+          items = []
+
+          for fname in os.listdir("."):
+              if not fname.lower().endswith(EXTS) or "__" not in fname:
+                  continue
+              stem = os.path.splitext(fname)[0]
+              parts = [p.strip() for p in stem.split("__")]
+              cat = PREFIXES.get(parts[0].lower())
+              if not cat or len(parts) < 2:
+                  continue
+
+              title = parts[1]
+              author = parts[2] if len(parts) > 2 else ""
+              note = parts[3] if len(parts) > 3 else ""
+
+              ts_raw = subprocess.check_output(
+                  ["git", "log", "-1", "--format=%ct", "--", fname], text=True
+              ).strip()
+              ts = int(ts_raw) if ts_raw.isdigit() else 0
+
+              items.append({
+                  "file": fname,
+                  "category": cat,
+                  "title": title,
+                  "author": author,
+                  "note": note,
+                  "timestamp": ts,
+              })
+
+          items.sort(key=lambda x: x["timestamp"], reverse=True)
+          with open("gallery.json", "w", encoding="utf-8") as f:
+              json.dump(items, f, ensure_ascii=False, indent=2)
+          EOF
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+      - id: deployment
+        uses: actions/deploy-pages@v4
