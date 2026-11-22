@@ -1490,7 +1490,22 @@
         flex-direction: column;
         gap: 9px;
         width: 100%;
-        animation: card-rise 0.36s var(--ease-out-expo) both;
+        /* No entry animation here: cards are revealed on scroll (see .reveal) */
+      }
+
+      /* Scroll-reveal: cards rise softly as they enter the viewport.
+         Hidden state applies only when JS confirmed it can reveal them (html.js-reveal). */
+      .js-reveal .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      .js-reveal .reveal.is-revealed {
+        opacity: 1;
+        transform: translateY(0);
+        transition:
+          opacity 0.62s var(--ease-out-expo),
+          transform 0.62s var(--ease-out-expo);
       }
 
       @keyframes card-rise {
@@ -2449,6 +2464,13 @@
           scroll-behavior: auto;
         }
 
+        .reveal,
+        .reveal.is-revealed {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+
         .status-line.is-live .status-dot::after,
         .beam-cta::before,
         .character-float,
@@ -2457,7 +2479,39 @@
           animation: none !important;
         }
       }
+
+      /* =====================================================================
+         MOBILE / LOW-POWER PERF: cheaper compositing (big blur over the
+         animated canvas is the single most expensive thing on phones)
+         ===================================================================== */
+      @media (max-width: 680px) {
+        .spotlight-glass,
+        .beam-cta,
+        .site-header.is-scrolled {
+          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+        }
+
+        .art-media {
+          contain: layout paint;
+        }
+      }
     </style>
+
+    <!-- Scroll-reveal guard: hide-before-reveal styles only activate when the
+         browser can actually reveal them (no JS / reduced motion => always visible) -->
+    <script>
+      (function () {
+        try {
+          var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!reduced && 'IntersectionObserver' in window) {
+            document.documentElement.classList.add('js-reveal');
+          }
+        } catch (e) {
+          /* keep content visible */
+        }
+      })();
+    </script>
   </head>
 
   <body>
@@ -2598,14 +2652,14 @@
       <!-- SECTION 2: «МАСТЕРСКАЯ» WITH TABS (ВСЕ / ХУДОЖНИКИ / ИИ-АРТЫ) -->
       <section class="gallery-section" id="gallery" aria-labelledby="gallery-heading">
         <div class="container">
-          <div class="gallery-head">
+          <div class="gallery-head reveal">
             <h2 class="section-title" id="gallery-heading">Мастерская</h2>
             <p class="section-note">
               Работы художников сообщества и ИИ-арты со стримов. Нажмите на картинку, чтобы открыть её на весь экран.
             </p>
           </div>
 
-          <div class="gallery-controls">
+          <div class="gallery-controls reveal" data-reveal-delay="80">
             <div class="gallery-tabs" id="gallery-tabs" role="tablist" aria-label="Фильтр мастерской">
               <button
                 type="button"
@@ -3348,7 +3402,7 @@
             : '';
 
           return `
-            <article class="art-slide" style="animation-delay: ${Math.min(filteredIdx * 40, 260)}ms;">
+            <article class="art-slide reveal" data-reveal-delay="${Math.min(filteredIdx * 55, 330)}">
               <button
                 type="button"
                 class="art-trigger"
@@ -3472,6 +3526,7 @@
             wireImageLoadFade(grid);
             bindSpotlightTracking();
             bindLightboxTriggers();
+            observeReveals(grid);
             grid.classList.remove('is-switching');
           };
 
@@ -3717,6 +3772,41 @@
 
           window.addEventListener('scroll', onScroll, { passive: true });
           onScroll();
+        }
+
+        /* =====================================================================
+           5b. SCROLL REVEAL — cards & section headers rise once on entry
+           ===================================================================== */
+        let revealObserver = null;
+
+        function setupRevealObserver() {
+          // The <head> guard already decided whether reveal is safe (IO present,
+          // motion allowed). Without that class nothing is ever hidden.
+          if (!document.documentElement.classList.contains('js-reveal')) return;
+          if (typeof IntersectionObserver !== 'function') return;
+
+          revealObserver = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                const el = entry.target;
+                const delay = Number(el.getAttribute('data-reveal-delay')) || 0;
+                window.setTimeout(() => el.classList.add('is-revealed'), delay);
+                revealObserver.unobserve(el);
+              });
+            },
+            { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+          );
+
+          observeReveals(document);
+        }
+
+        function observeReveals(root) {
+          if (!revealObserver) return;
+          const scope = root && root.querySelectorAll ? root : document;
+          scope.querySelectorAll('.reveal:not(.is-revealed)').forEach((el) => {
+            revealObserver.observe(el);
+          });
         }
 
         function bindSpotlightTracking() {
@@ -4086,6 +4176,10 @@
           let currentNy = 0;
           let meteor = null;
           let nextMeteorAt = 6.5;
+          // Cached gradients/sprites — recreating them every frame was the main
+          // source of scroll jank (createLinearGradient/createRadialGradient are costly).
+          let skyGradCache = null;
+          let fireflySprites = null;
 
           const pseudoRand = (seed) => {
             const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
@@ -4569,15 +4663,23 @@
 
           resize();
           window.addEventListener('resize', resize, { passive: true });
+
+          // Scroll work is coalesced into a single rAF tick: writing a CSS var on
+          // every scroll event (and re-rendering there) forced extra layouts.
+          let scrollRaf = 0;
+          const onScrollFrame = () => {
+            scrollRaf = 0;
+            if (zebraSilk) {
+              const shift = Math.max(-100, Math.min(100, -scrollY * 0.06));
+              zebraSilk.style.setProperty('--zebra-y', `${shift.toFixed(1)}px`);
+            }
+            if (prefersReducedMotion) renderFrame(0.6, 0);
+          };
           window.addEventListener(
             'scroll',
             () => {
               scrollY = window.scrollY || window.pageYOffset || 0;
-              if (zebraSilk) {
-                const shift = Math.max(-100, Math.min(100, -scrollY * 0.06));
-                zebraSilk.style.setProperty('--zebra-y', `${shift.toFixed(1)}px`);
-              }
-              if (prefersReducedMotion) renderFrame(0.6, 0);
+              if (!scrollRaf) scrollRaf = window.requestAnimationFrame(onScrollFrame);
             },
             { passive: true }
           );
@@ -4597,13 +4699,16 @@
             const horizonY = baseHorizon - sClamped * 0.34;
 
             // 1. Unified continuous nocturnal savanna sky gradient across entire page
-            const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
-            skyGrad.addColorStop(0, '#040916');
-            skyGrad.addColorStop(0.32, '#071532');
-            skyGrad.addColorStop(0.64, '#0c234b');
-            skyGrad.addColorStop(0.84, '#071633');
-            skyGrad.addColorStop(1, '#050a18');
-            ctx.fillStyle = skyGrad;
+            if (!skyGradCache || skyGradCache.height !== height) {
+              const g = ctx.createLinearGradient(0, 0, 0, height);
+              g.addColorStop(0, '#040916');
+              g.addColorStop(0.32, '#071532');
+              g.addColorStop(0.64, '#0c234b');
+              g.addColorStop(0.84, '#071633');
+              g.addColorStop(1, '#050a18');
+              skyGradCache = { height, grad: g };
+            }
+            ctx.fillStyle = skyGradCache.grad;
             ctx.fillRect(0, 0, width, height);
 
             // Whispered teal-indigo lunar horizon glow smoothly drifting with scroll
@@ -4708,6 +4813,29 @@
             }
 
             // 8. Rare serene emerald & lunar fireflies drifting gently across the ENTIRE page
+            //    (pre-rendered glow sprites instead of per-frame radial gradients)
+            if (!fireflySprites) {
+              const makeSprite = (rgb) => {
+                const size = 64;
+                const c = document.createElement('canvas');
+                c.width = size;
+                c.height = size;
+                const sctx = c.getContext('2d');
+                if (!sctx) return null;
+                const g = sctx.createRadialGradient(size / 2, size / 2, 0.5, size / 2, size / 2, size / 2);
+                g.addColorStop(0, `rgba(${rgb}, 0.78)`);
+                g.addColorStop(0.38, `rgba(${rgb}, 0.24)`);
+                g.addColorStop(1, `rgba(${rgb}, 0)`);
+                sctx.fillStyle = g;
+                sctx.fillRect(0, 0, size, size);
+                return c;
+              };
+              fireflySprites = {
+                lunar: makeSprite('180, 224, 255'),
+                emerald: makeSprite('52, 245, 168')
+              };
+            }
+
             for (let i = 0; i < fireflies.length; i++) {
               const f = fireflies[i];
               f.x += (f.vx + Math.sin(tSec * 0.68 + f.phase) * 5.5) * dt;
@@ -4724,16 +4852,11 @@
               const fy = f.y + py * 1.05;
               const pulse = 0.32 + 0.68 * (0.5 + 0.5 * Math.sin(tSec * 1.85 + f.phase));
               const glowR = f.r * 5.4;
-              const colorRgb = f.emerald ? '52, 245, 168' : '180, 224, 255';
-              const g = ctx.createRadialGradient(fx, fy, 0.2, fx, fy, glowR);
-              g.addColorStop(0, `rgba(${colorRgb}, ${(0.72 * pulse).toFixed(3)})`);
-              g.addColorStop(0.38, `rgba(${colorRgb}, ${(0.22 * pulse).toFixed(3)})`);
-              g.addColorStop(1, `rgba(${colorRgb}, 0)`);
-
-              ctx.fillStyle = g;
-              ctx.beginPath();
-              ctx.arc(fx, fy, glowR, 0, Math.PI * 2);
-              ctx.fill();
+              const sprite = f.emerald ? fireflySprites.emerald : fireflySprites.lunar;
+              if (!sprite) continue;
+              ctx.globalAlpha = pulse;
+              ctx.drawImage(sprite, fx - glowR, fy - glowR, glowR * 2, glowR * 2);
+              ctx.globalAlpha = 1;
             }
           };
 
@@ -4741,7 +4864,9 @@
 
           if (!prefersReducedMotion) {
             let lastTime = performance.now();
-            const FRAME_INTERVAL = 42;
+            // Phones get a lower frame budget for the atmosphere layer: it is
+            // decorative, and 24 fps here buys a much smoother page scroll.
+            const FRAME_INTERVAL = window.matchMedia('(max-width: 680px)').matches ? 66 : 42;
             const tick = (now) => {
               const elapsed = now - lastTime;
               if (!document.hidden && elapsed >= FRAME_INTERVAL) {
@@ -4755,14 +4880,18 @@
 
             // Subtle desktop-only pointer parallax across savanna depth planes & character
             if (finePointer) {
+              let pointerRaf = 0;
               window.addEventListener(
                 'mousemove',
                 (e) => {
                   targetNx = e.clientX / Math.max(1, window.innerWidth) - 0.5;
                   targetNy = e.clientY / Math.max(1, window.innerHeight) - 0.5;
-                  if (charStage) {
-                    charStage.style.setProperty('--px', `${(targetNx * -8).toFixed(1)}px`);
-                    charStage.style.setProperty('--py', `${(targetNy * -5).toFixed(1)}px`);
+                  if (charStage && !pointerRaf) {
+                    pointerRaf = window.requestAnimationFrame(() => {
+                      pointerRaf = 0;
+                      charStage.style.setProperty('--px', `${(targetNx * -8).toFixed(1)}px`);
+                      charStage.style.setProperty('--py', `${(targetNy * -5).toFixed(1)}px`);
+                    });
                   }
                 },
                 { passive: true }
@@ -4799,6 +4928,7 @@
            9. BOOT
            ===================================================================== */
         syncCanonicalSeo();
+        setupRevealObserver();
         renderSite();
         updateCategoryCounts();
         setupGalleryControls();
